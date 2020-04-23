@@ -25,11 +25,13 @@ extern "C" {
 }
 
 class HfpOfonoVoiceCallManager;
+class HfpHFRole;
+class HfpOfonoVoiceCall;
 
 class HfpOfonoModem
 {
 public:
-	HfpOfonoModem(const std::string& objectPath);
+	HfpOfonoModem(const std::string& objectPath, HfpHFRole *role);
 	~HfpOfonoModem();
 
 	HfpOfonoModem(const HfpOfonoModem&) = delete;
@@ -38,10 +40,15 @@ public:
 	bool isModemConnected() const;
 	HfpOfonoVoiceCallManager* getVoiceManager() const { return mVoiceCallManager; }
 	std::string getAddress() const { return mAddress; }
+	void updateState(HfpOfonoVoiceCall *call);
+	void callAdded(HfpOfonoVoiceCall *voiceCall);
+	void callRemoved(HfpOfonoVoiceCall *voiceCall);
+	std::string getAdapterAddress();
 
 	static void handleModemPropertyChanged(OfonoModem *proxy, char *name, GVariant *v, void *userData);
 
 private:
+	HfpHFRole *mHfpHFRole;
 	std::string mObjectPath;
 	OfonoModem *mOfonoModemProxy;
 	HfpOfonoVoiceCallManager *mVoiceCallManager;

@@ -15,6 +15,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "hfpofonovoicecallmanager.h"
+#include "hfpofonovoicecall.h"
+#include "hfpofonomodem.h"
 #include <glib.h>
 #include <gio/gio.h>
 #include <string>
@@ -24,7 +26,8 @@ extern "C" {
 #include "ofono-interface.h"
 }
 
-HfpOfonoVoiceCallManager::HfpOfonoVoiceCallManager(const std::string &objectPath) :
+HfpOfonoVoiceCallManager::HfpOfonoVoiceCallManager(const std::string &objectPath, HfpOfonoModem *modem) :
+mModem(modem),
 mObjectPath(objectPath),
 mOfonoVoiceCallManagerProxy(nullptr)
 {
@@ -37,6 +40,9 @@ mOfonoVoiceCallManagerProxy(nullptr)
 		g_error_free(error);
 		return;
 	}
+
+	g_signal_connect(G_OBJECT(mOfonoVoiceCallManagerProxy), "call-added", G_CALLBACK(handleCallAdded), this);
+	g_signal_connect(G_OBJECT(mOfonoVoiceCallManagerProxy), "call-removed", G_CALLBACK(handleCallRemoved), this);
 }
 
 HfpOfonoVoiceCallManager::~HfpOfonoVoiceCallManager()
@@ -67,4 +73,37 @@ std::string HfpOfonoVoiceCallManager::dial(const std::string &phoneNumber)
 	}
 
 	return callId;
+}
+
+void HfpOfonoVoiceCallManager::handleCallAdded(OfonoVoiceCallManager *object, const gchar *path, GVariant *properties, void *userData)
+{
+	HfpOfonoVoiceCallManager *pThis = static_cast<HfpOfonoVoiceCallManager*>(userData);
+	if (!pThis)
+		return;
+
+	BT_DEBUG("callAdded %s", path);
+	std::unique_ptr<HfpOfonoVoiceCall> call (new HfpOfonoVoiceCall(path, pThis->mModem));
+
+	if (pThis->mModem)
+	{
+		pThis->mModem->callAdded(call.get());
+		pThis->mModem->updateState(call.get());
+
+		pThis->mCallMap[path] = std::move(call);
+	}
+}
+
+void HfpOfonoVoiceCallManager::handleCallRemoved(OfonoVoiceCallManager *object, const gchar *path, void *userData)
+{
+	BT_DEBUG("callRemoved %s", path);
+	HfpOfonoVoiceCallManager *pThis = static_cast<HfpOfonoVoiceCallManager*>(userData);
+	if (!pThis)
+		return;
+
+	auto it = pThis->mCallMap.find(path);
+
+	if (it != pThis->mCallMap.end())
+		it->second->getModem()->callRemoved(it->second.get());
+
+	pThis->mCallMap.erase(path);
 }

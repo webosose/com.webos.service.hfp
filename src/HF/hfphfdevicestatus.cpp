@@ -532,6 +532,16 @@ BluetoothErrorCode HfpHFDeviceStatus::checkAddress(const std::string &remoteAddr
 	return BT_ERR_DEVICE_NOT_CONNECTED;
 }
 
+BluetoothErrorCode HfpHFDeviceStatus::checkAddress(const std::string &remoteAddr, const std::string &adapterAddress) const
+{
+	if (remoteAddr.size() != 17)
+		return BT_ERR_ADDRESS_INVALID;
+	if (isDeviceAvailable(remoteAddr, adapterAddress))
+		return BT_ERR_NO_ERROR;
+
+	return BT_ERR_DEVICE_NOT_CONNECTED;
+}
+
 bool HfpHFDeviceStatus::isDeviceConnecting() const
 {
 	if (mHfpDeviceInfo.empty() && mTempDeviceInfo != nullptr)

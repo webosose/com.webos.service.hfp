@@ -27,22 +27,24 @@ extern "C" {
 }
 
 class HfpOfonoModem;
+class HfpHFRole;
 
 class HfpOfonoManager
 {
 public:
-	HfpOfonoManager(const std::string& objectPath);
+	HfpOfonoManager(const std::string& objectPath, HfpHFRole* hfRole);
 	~HfpOfonoManager();
 
 	HfpOfonoManager(const HfpOfonoManager&) = delete;
 	HfpOfonoManager& operator = (const HfpOfonoManager&) = delete;
 
 	void getModemsFromOfonoManager();
-	HfpOfonoModem * getModemFromMap(const std::string &address) const;
+	HfpOfonoModem * getModem(const std::string &adapterAddress, const std::string &address) const;
 	static void handleModemAdded(OfonoManager *object, const gchar *path, GVariant *properties, void *userData);
 	static void handleModemRemoved(OfonoManager *object, const gchar *path, void *userData);
 
 private:
+	HfpHFRole *mHfpHFRole;
 	std::string mObjectPath;
 	OfonoManager *mOfonoManagerProxy;
 	std::unordered_map <std::string, std::unique_ptr <HfpOfonoModem>> mModemsMap;

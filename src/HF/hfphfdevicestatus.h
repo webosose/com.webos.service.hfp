@@ -43,6 +43,7 @@ public:
 	bool isDeviceAvailable(const std::string &remoteAddr , const std::string &adapterAddr) const;
 	bool isAdapterAvailable(const std::string &adapterAddr) const;
 	BluetoothErrorCode checkAddress(const std::string &remoteAddr) const;
+	BluetoothErrorCode checkAddress(const std::string &remoteAddr, const std::string &adapterAddress) const;
 	bool isDeviceConnecting() const;
 	HFDeviceList getDeviceInfoList() const { return mHfpDeviceInfo; }
 	bool updateSCOStatus(const std::string &remoteAddr, const std::string &adapterAddr, bool status);

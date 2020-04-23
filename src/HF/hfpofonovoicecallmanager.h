@@ -18,24 +18,35 @@
 #define OFONO_VOICE_CALL_MANAGER_H
 
 #include <string>
+#include <unordered_map>
+#include <memory>
 
 extern "C" {
 #include "ofono-interface.h"
 }
 
+class HfpOfonoVoiceCall;
+class HfpOfonoModem;
+
 class HfpOfonoVoiceCallManager
 {
 public:
-	HfpOfonoVoiceCallManager(const std::string &objectPath);
+	HfpOfonoVoiceCallManager(const std::string &objectPath, HfpOfonoModem *modem);
 	~HfpOfonoVoiceCallManager();
 	HfpOfonoVoiceCallManager(const HfpOfonoVoiceCallManager&) = delete;
 	HfpOfonoVoiceCallManager& operator = (const HfpOfonoVoiceCallManager&) = delete;
 
 	std::string dial(const std::string &phoneNumber);
+	static void handleCallAdded(OfonoVoiceCallManager *object, const gchar *path, GVariant *properties, void *userData);
+	static void handleCallRemoved(OfonoVoiceCallManager *object, const gchar *path, void *userData);
 
 private:
+	HfpOfonoModem* mModem;
 	std::string mObjectPath;
 	OfonoVoiceCallManager* mOfonoVoiceCallManagerProxy;
+	gulong mSignalCallAddded;
+	gulong mSignalCallRemoved;
+	std::unordered_map <std::string, std::unique_ptr <HfpOfonoVoiceCall>> mCallMap;
 };
 
 #endif

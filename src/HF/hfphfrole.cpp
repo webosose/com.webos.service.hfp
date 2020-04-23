@@ -96,7 +96,7 @@ void HfpHFRole::initialize()
 
 void HfpHFRole::createOfonoManager()
 {
-	mHfpOfonoManager = new HfpOfonoManager("/");
+	mHfpOfonoManager = new HfpOfonoManager("/", this);
 }
 
 void HfpHFRole::destroyOfonoManager()
@@ -586,30 +586,32 @@ bool HfpHFRole::call(LSMessage &message)
 {
 	LS::Message request(&message);
 	std::string remoteAddr = "";
-	const std::string schema = STRICT_SCHEMA(PROPS_3(PROP(address, string),PROP(number, string),PROP(memoryDialing,integer))
-                                                REQUIRED_1(address));
+	const std::string schema = STRICT_SCHEMA(PROPS_4(PROP(address, string),PROP(adapterAddress, string),PROP(number, string),PROP(memoryDialing,integer))
+                                                REQUIRED_2(address, adapterAddress));
 	LS2ParamList paramList =
                         {{"address", std::make_pair(HFGeneral::DataType::STRING, BT_ERR_ADDR_PARAM_MISSING)},
+                        {"adapterAddress", std::make_pair(HFGeneral::DataType::STRING, BT_ERR_ADAPTER_ADDR_PARAM_MISSING)},
                         {"number", std::make_pair(HFGeneral::DataType::STRING, BT_ERR_SCHEMA_VALIDATION_FAIL)},
                         {"memoryDialing", std::make_pair(HFGeneral::DataType::INTEGER, BT_ERR_SCHEMA_VALIDATION_FAIL)}};
 	LS2Result localResult;
 
-	if (parseLSMessage(message, HfpHFLS2Data(schema, paramList), remoteAddr, localResult, false))
+	if (parseLSMessage(message, HfpHFLS2Data(schema, paramList), remoteAddr, localResult, false, true))
 	{
 		std::string number = mHFLS2Call->getParam(localResult, "number");
 		std::string memoryDialing = mHFLS2Call->getParam(localResult, "memoryDialing");
+		std::string adapterAddress = mHFLS2Call->getParam(localResult, "adapterAddress");
 
 		if(!number.empty())
 		{
-			std::string address = convertToUpperCase(remoteAddr);
-			auto modem = mHfpOfonoManager->getModemFromMap(address);
+			auto modem = mHfpOfonoManager->getModem(adapterAddress, remoteAddr);
 			if (!modem)
 			{
 				LSUtils::respondWithError(request, BT_ERR_DEVICE_NOT_CONNECTED);
 				return true;
 			}
+
 			auto voiceManager = modem->getVoiceManager();
-			if (!modem)
+			if (!voiceManager)
 			{
 				LSUtils::respondWithError(request, BT_ERR_DEVICE_NOT_CONNECTED);
 				return true;
@@ -713,7 +715,7 @@ bool HfpHFRole::handleSendAT(const std::string &remoteAddr, const std::string &t
 }
 
 bool HfpHFRole::parseLSMessage(LSMessage &message, const HfpHFLS2Data &ls2Data, std::string &remoteAddr, LS2Result &result,
-                                bool isSubscribeFunc)
+                                bool isSubscribeFunc, bool isMultiAdapterSupport)
 {
 	LS::Message request(&message);
 	if (!mHFLS2Call->parseLSMessage(request, ls2Data, result))
@@ -727,6 +729,11 @@ bool HfpHFRole::parseLSMessage(LSMessage &message, const HfpHFLS2Data &ls2Data, 
 	else
 	{
 		remoteAddr = mHFLS2Call->getParam(result, "address");
+		if (isMultiAdapterSupport)
+		{
+			std::string adapterAddress = mHFLS2Call->getParam(result, "adapterAddress");
+			return handleOneReplyFunc(request, remoteAddr, adapterAddress);
+		}
 		return handleOneReplyFunc(request, remoteAddr);
 	}
 }
@@ -752,6 +759,18 @@ void HfpHFRole::handleSubscribeFunc(LS::Message &request)
 bool HfpHFRole::handleOneReplyFunc(LS::Message &request, const std::string &remoteAddr)
 {
 	BluetoothErrorCode errorCode = mHFDevice->checkAddress(remoteAddr);
+	if (errorCode != BT_ERR_NO_ERROR)
+	{
+		LSUtils::respondWithError(request, errorCode);
+		return false;
+	}
+	mResponseMessage.insert(std::make_pair(remoteAddr, request));
+	return true;
+}
+
+bool HfpHFRole::handleOneReplyFunc(LS::Message &request, const std::string &remoteAddr, std::string &adapterAddress)
+{
+	BluetoothErrorCode errorCode = mHFDevice->checkAddress(remoteAddr, adapterAddress);
 	if (errorCode != BT_ERR_NO_ERROR)
 	{
 		LSUtils::respondWithError(request, errorCode);
@@ -821,7 +840,7 @@ void HfpHFRole::handleAdapterGetStatus(LSMessage* reply)
 			auto adapterAaddress = adapterObj["adapterAddress"].asString();
 			auto adapterName = adapterObj["name"].asString();
 			auto itr = mAdapterMap.find(adapterAaddress.c_str());
-			if(itr == mAdapterMap.end())
+			if(itr == mAdapterMap.end() && !adapterName.empty() && !adapterAaddress.empty())
 			{
 				BT_DEBUG("Adding Adapter %s",adapterName.c_str());
 				mAdapterMap.insert(std::make_pair(adapterAaddress,adapterName));

@@ -66,6 +66,8 @@ public:
 	void subscribeService();
 	void unsubscribeServiceAll();
 	void unsubscribeScoServicebyAdapterAddress(const std::string &adapterAddr);
+	HfpHFDeviceStatus* getHfDevice() const { return mHFDevice;}
+	std::unordered_map<std::string ,std::string> & getAdapterMap() { return mAdapterMap; }
 
 private:
 	void buildGetStatusResp(const std::string &remoteAddr, const HfpDeviceInfo &localDevice, const std::string &adapterAddr, pbnjson::JValue &AGObj);
@@ -82,9 +84,10 @@ private:
 	int findScoContextIndex(const std::string &remoteAddr, const std::string &adapterAddr);
 	bool handleSendAT(const std::string &remoteAddr, const std::string &type, const std::string &command, const std::string &arguments);
 	bool handleSendAT(const std::string &remoteAddr, const std::string &type, const std::string &command);
-	bool parseLSMessage(LSMessage &message, const HfpHFLS2Data &ls2Data, std::string &remoteAddr, LS2Result &result, bool isSubscribeFunc);
+	bool parseLSMessage(LSMessage &message, const HfpHFLS2Data &ls2Data, std::string &remoteAddr, LS2Result &result, bool isSubscribeFunc, bool isMultiAdapterSupport = false);
 	void handleSubscribeFunc(LS::Message &request);
 	bool handleOneReplyFunc(LS::Message &request, const std::string &remoteAddr);
+	bool handleOneReplyFunc(LS::Message &request, const std::string &remoteAddr, std::string &adapterAddress);
 	void createOfonoManager();
 	void destroyOfonoManager();
 

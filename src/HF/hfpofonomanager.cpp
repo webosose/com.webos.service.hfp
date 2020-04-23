@@ -16,6 +16,7 @@
 
 #include "hfpofonomanager.h"
 #include "hfpofonomodem.h"
+#include "hfphfrole.h"
 #include "logging.h"
 #include <glib.h>
 #include <gio/gio.h>
@@ -27,7 +28,8 @@ extern "C" {
 #include "ofono-interface.h"
 }
 
-HfpOfonoManager::HfpOfonoManager(const std::string& objectPath) :
+HfpOfonoManager::HfpOfonoManager(const std::string& objectPath, HfpHFRole *role) :
+mHfpHFRole(role),
 mObjectPath(objectPath),
 mOfonoManagerProxy(nullptr)
 {
@@ -62,7 +64,7 @@ void HfpOfonoManager::handleModemAdded(OfonoManager *object, const gchar *path, 
 	if (!pThis)
 		return;
 
-	std::unique_ptr<HfpOfonoModem> modem (new HfpOfonoModem(path));
+	std::unique_ptr<HfpOfonoModem> modem (new HfpOfonoModem(path, pThis->mHfpHFRole));
 	pThis->mModemsMap[path] = std::move(modem);
 }
 
@@ -98,16 +100,16 @@ void HfpOfonoManager::getModemsFromOfonoManager()
 		const gchar *key;
 		g_autoptr(GVariant) value = NULL;
 
-		std::unique_ptr<HfpOfonoModem> modem (new HfpOfonoModem(objectPath));
+		std::unique_ptr<HfpOfonoModem> modem (new HfpOfonoModem(objectPath, mHfpHFRole));
 		mModemsMap.insert(std::make_pair(objectPath, std::move(modem)));
 	}
 }
 
-HfpOfonoModem* HfpOfonoManager::getModemFromMap(const std::string &address) const
+HfpOfonoModem* HfpOfonoManager::getModem(const std::string &adapterAddress, const std::string &address) const
 {
 	for (auto it = mModemsMap.begin(); it != mModemsMap.end(); it++)
 	{
-		if ((it->second).get()->getAddress() == address)
+		if (((it->second).get()->getAdapterAddress() == adapterAddress) && ((it->second).get()->getAddress() == address))
 			return (it->second).get();
 	}
 

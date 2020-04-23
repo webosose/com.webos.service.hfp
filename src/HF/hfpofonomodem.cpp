@@ -15,17 +15,23 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #include "hfpofonomodem.h"
+#include "hfphfrole.h"
+#include "hfpdeviceinfo.h"
+#include "hfpofonovoicecall.h"
+#include "utils.h"
 #include "logging.h"
 #include <glib.h>
 #include <gio/gio.h>
 #include <string>
+#include <algorithm>
 #include "hfpofonovoicecallmanager.h"
 
 extern "C" {
 #include "ofono-interface.h"
 }
 
-HfpOfonoModem::HfpOfonoModem(const std::string& objectPath) :
+HfpOfonoModem::HfpOfonoModem(const std::string& objectPath, HfpHFRole *role) :
+mHfpHFRole(role),
 mObjectPath(objectPath),
 mOfonoModemProxy(nullptr),
 mVoiceCallManager(nullptr),
@@ -42,7 +48,7 @@ mAddress("")
 		return;
 	}
 
-	mVoiceCallManager = new HfpOfonoVoiceCallManager(objectPath);
+	mVoiceCallManager = new HfpOfonoVoiceCallManager(objectPath, this);
 
 	getModemProperties(mOfonoModemProxy);
 
@@ -51,6 +57,9 @@ mAddress("")
 
 HfpOfonoModem::~HfpOfonoModem()
 {
+	if(mVoiceCallManager)
+		delete mVoiceCallManager;
+
 	if (mOfonoModemProxy)
 		g_object_unref(mOfonoModemProxy);
 
@@ -143,7 +152,9 @@ void HfpOfonoModem::getModemProperties(OfonoModem *modemProxy)
 			const char *serial = nullptr;
 			g_variant_get(valueVar, "s", &serial);
 			if (serial)
-				mAddress = serial;
+			{
+				mAddress = convertToLower(serial);
+			}
 		}
 	}
 }
@@ -160,4 +171,109 @@ bool HfpOfonoModem::isModemConnected() const
 	}
 
 	return false;
+}
+
+void HfpOfonoModem::callAdded(HfpOfonoVoiceCall *voiceCall)
+{
+	std::string adapterAddress = getAdapterAddress();
+
+	HfpDeviceInfo *device = mHfpHFRole->getHfDevice()->findDeviceInfo(convertToLowerCase(mAddress), adapterAddress);
+	if (!device)
+	{
+		BT_ERROR("DEVICE NOT FOUND", 0, "%s", voiceCall->getLineIdentification().c_str());
+		return;
+	}
+
+	std::string phoneNumber = voiceCall->getLineIdentification();
+
+	if (phoneNumber.empty())
+		return;
+
+	std::string voiceCallPath = voiceCall->getObjectPath();
+	std::size_t found = voiceCallPath.find_last_of("voicecall");
+	if (found != std::string::npos)
+	{
+		std::string index = voiceCallPath.substr(found + 1, voiceCallPath.length());
+		device->setCallStatus(phoneNumber, CLCC::DeviceStatus::INDEX, index);
+	}
+}
+
+void HfpOfonoModem::callRemoved(HfpOfonoVoiceCall *voiceCall)
+{
+	HfpDeviceInfo *device = mHfpHFRole->getHfDevice()->findDeviceInfo(convertToLowerCase(mAddress), getAdapterAddress());
+	if (!device)
+	{
+		BT_ERROR("DEVICE NOT FOUND", 0, "%s", voiceCall->getLineIdentification().c_str());
+		return;
+	}
+
+	std::string phoneNumber = voiceCall->getLineIdentification();
+	if (!phoneNumber.empty())
+	{
+		device->eraseCallStatus(phoneNumber);
+		mHfpHFRole->notifySubscribersStatusChanged(true);
+	}
+}
+
+void HfpOfonoModem::updateState(HfpOfonoVoiceCall *voiceCall)
+{
+	HfpDeviceInfo *device = mHfpHFRole->getHfDevice()->findDeviceInfo(convertToLowerCase(mAddress), getAdapterAddress());
+	if (!device)
+	{
+		BT_ERROR("DEVICE NOT FOUND", 0, "%s", voiceCall->getLineIdentification().c_str());
+		return;
+	}
+
+
+	std::string phoneNumber = voiceCall->getLineIdentification();
+
+	std::string callState = voiceCall->getCallState();
+
+
+	if (!phoneNumber.empty() && !callState.empty())
+	{
+		device->setCallStatus(phoneNumber, CLCC::DeviceStatus::STATUS, callState);
+		if (callState == "dialing")
+			device->setCallStatus(phoneNumber, CLCC::DeviceStatus::DIRECTION, "outgoing");
+		else if (callState == "incoming")
+			device->setCallStatus(phoneNumber, CLCC::DeviceStatus::DIRECTION, "incoming");
+	}
+
+	mHfpHFRole->notifySubscribersStatusChanged(true);
+}
+
+std::string HfpOfonoModem::getAdapterAddress()
+{
+	auto adapterMap = mHfpHFRole->getAdapterMap();
+	std::string hciName;
+
+	std::size_t hciPos = mObjectPath.find("hci");
+	if (hciPos != std::string::npos)
+	{
+		std::size_t indexPos = mObjectPath.find("/", hciPos);
+		if (indexPos != std::string::npos)
+		{
+		    hciName = mObjectPath.substr(hciPos, indexPos - hciPos);
+		}
+	}
+
+	 for (auto adapter = adapterMap.begin(); adapter != adapterMap.end(); adapter++)
+	 {
+		std::string adapterName = adapter->second;
+		auto it = hciName.begin();
+		bool matching = adapterName.size() >= hciName.size() &&
+				std::all_of (std::next(adapterName.begin(),
+				                       adapterName.size() - hciName.size()),
+				                       adapterName.end(),
+				                       [&it](const char & c)
+				                       {
+					                        return c == *(it++);
+				                       }
+				            );
+		if (matching)
+			return adapter->first;
+	 }
+
+	 //On failure return empty string
+	 return std::string();
 }
