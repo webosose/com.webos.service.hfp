@@ -46,8 +46,11 @@ void HfpHFDeviceStatus::flushDeviceInfo()
 {
 	for (auto& i : mHfpDeviceInfo)
 	{
-		if (i.second != nullptr)
-			delete i.second;
+		for(auto devitr : i.second)
+		{
+			if (devitr.second != nullptr)
+			delete devitr.second;
+		}
 	}
 	mHfpDeviceInfo.clear();
 }
@@ -286,14 +289,28 @@ HfpDeviceInfo* HfpHFDeviceStatus::findDeviceInfo(const std::string &remoteAddr) 
 	auto localDevice = mHfpDeviceInfo.find(remoteAddr);
 
 	if (localDevice != mHfpDeviceInfo.end())
-		return localDevice->second;
+		return nullptr;
 
 	return nullptr;
 }
 
-bool HfpHFDeviceStatus::createDeviceInfo(const std::string &remoteAddr)
+HfpDeviceInfo* HfpHFDeviceStatus::findDeviceInfo(const std::string &remoteAddr, const std::string &adapterAddr) const
 {
-	if (isDeviceAvailable(remoteAddr))
+	auto adapterInfo = mHfpDeviceInfo.find(adapterAddr);
+
+	if (adapterInfo != mHfpDeviceInfo.end())
+	{
+		auto deviceInfo = adapterInfo->second.find(remoteAddr);
+		if(deviceInfo != adapterInfo->second.end())
+			return deviceInfo->second;
+	}
+
+	return nullptr;
+}
+
+bool HfpHFDeviceStatus::createDeviceInfo(const std::string &remoteAddr , const std::string &adapterAddr)
+{
+	if (isDeviceAvailable(remoteAddr,adapterAddr))
 	{
 		BT_DEBUG("Local device already has %s's DeviceInfo", remoteAddr.c_str());
 		return false;
@@ -310,30 +327,67 @@ bool HfpHFDeviceStatus::createDeviceInfo(const std::string &remoteAddr)
 		mTempDeviceInfo = nullptr;
 	}
 
-	mHfpDeviceInfo.insert(std::make_pair(remoteAddr, deviceInfo));
+	auto adapterInfo = mHfpDeviceInfo.find(adapterAddr);
+	if(adapterInfo != mHfpDeviceInfo.end())
+	{
+		adapterInfo->second.insert(std::make_pair(remoteAddr, deviceInfo));
+	}
+	else
+	{
+		std::unordered_map<std::string, HfpDeviceInfo*> temp ;
+		temp.insert(std::make_pair(remoteAddr,deviceInfo));
+		mHfpDeviceInfo.insert(std::make_pair(adapterAddr,temp));
+	}
+
 	deviceInfo->setAudioStatus(SCO::DeviceStatus::VOLUME, 9);
 	BT_DEBUG("Create the %s's DeviceInfo", remoteAddr.c_str());
 
-	if (isCallActive(remoteAddr))
+	/*if (isCallActive(remoteAddr))
 	{
 		mHFRole->sendCLCC(remoteAddr);
 		mReceivedATCmd.push(receiveATCMD::ATCMD::CLCC);
-	}
+	}*/
 	return true;
 }
 
-bool HfpHFDeviceStatus::removeDeviceInfo(const std::string &remoteAddr)
+bool HfpHFDeviceStatus::removeDeviceInfo(const std::string &remoteAddr , const std::string &adapterAddr)
 {
-	if (!isDeviceAvailable(remoteAddr))
+	auto adapterItr = mHfpDeviceInfo.find(adapterAddr);
+	if(adapterItr != mHfpDeviceInfo.end())
 	{
-		BT_DEBUG("Local device doesn't have %s's DeviceInfo", remoteAddr.c_str());
-		return false;
+		auto device = adapterItr->second.find(remoteAddr);
+		if(device != adapterItr->second.end())
+		{
+			BT_DEBUG("Remove adapter %s's device %s", adapterAddr.c_str(), remoteAddr.c_str());
+			delete device->second;
+			adapterItr->second.erase(device);
+			if(adapterItr->second.size() == 0)
+			{
+				BT_DEBUG("Remove adapter %s's Info", adapterAddr.c_str());
+				mHfpDeviceInfo.erase(adapterAddr);
+			}
+			return true;
+		}
 	}
-	BT_DEBUG("Remove the %s's Info", remoteAddr.c_str());
 
-	mHfpDeviceInfo.erase(remoteAddr);
+	return false;
+}
 
-	return true;
+bool HfpHFDeviceStatus::removeAllDevicebyAdapterAddress(const std::string &adapterAddr)
+{
+	auto adapterItr = mHfpDeviceInfo.find(adapterAddr);
+	if(adapterItr != mHfpDeviceInfo.end())
+	{
+		for (auto devitr : adapterItr->second)
+		{
+			if(devitr.second)
+				delete devitr.second;
+		}
+		mHfpDeviceInfo.erase(adapterAddr);
+		return true;
+	}
+
+	return false;
 }
 
 void HfpHFDeviceStatus::setBRSFValue(const std::string &remoteAddr, const std::string &arguments)
@@ -443,13 +497,28 @@ bool HfpHFDeviceStatus::setCIEVValue(const std::string &remoteAddr, const std::s
 	return false;
 }
 
-bool HfpHFDeviceStatus::isDeviceAvailable(const std::string &remoteAddr) const
+bool HfpHFDeviceStatus::isDeviceAvailable(const std::string &remoteAddr , const std::string &adapterAddr) const
 {
-	auto deviceInfo = mHfpDeviceInfo.find(remoteAddr);
+	auto adapterInfo = mHfpDeviceInfo.find(adapterAddr);
 
-	if (deviceInfo == mHfpDeviceInfo.end())
+	if (adapterInfo == mHfpDeviceInfo.end())
 		return false;
+	else
+	{
+		auto deviceInfo = adapterInfo->second.find(remoteAddr);
+		if(deviceInfo == adapterInfo->second.end())
+			return false;
+	}
 
+	return true;
+}
+
+bool HfpHFDeviceStatus::isAdapterAvailable(const std::string &adapterAddr) const
+{
+	auto adapterInfo = mHfpDeviceInfo.find(adapterAddr);
+
+	if (adapterInfo == mHfpDeviceInfo.end())
+		return false;
 	return true;
 }
 
@@ -457,10 +526,10 @@ BluetoothErrorCode HfpHFDeviceStatus::checkAddress(const std::string &remoteAddr
 {
 	if (remoteAddr.size() != 17)
 		return BT_ERR_ADDRESS_INVALID;
-	if (isDeviceAvailable(remoteAddr))
-		return BT_ERR_NO_ERROR;
-	else
-		return BT_ERR_DEVICE_NOT_CONNECTED;
+	//if (isDeviceAvailable(remoteAddr))  Commented adapter change required
+	//return BT_ERR_NO_ERROR;
+
+	return BT_ERR_DEVICE_NOT_CONNECTED;
 }
 
 bool HfpHFDeviceStatus::isDeviceConnecting() const
@@ -491,12 +560,12 @@ void HfpHFDeviceStatus::eraseCallStatus(const std::string &remoteAddr)
 	mDisconnectedHeldCall = false;
 }
 
-bool HfpHFDeviceStatus::updateSCOStatus(const std::string &remoteAddr, bool status)
+bool HfpHFDeviceStatus::updateSCOStatus(const std::string &remoteAddr, const std::string &adapterAddr, bool status)
 {
-	HfpDeviceInfo* localDevice = findDeviceInfo(remoteAddr);
+	HfpDeviceInfo* localDevice = findDeviceInfo(remoteAddr,adapterAddr);
 	if (localDevice == nullptr)
 	{
-		BT_DEBUG("Can't find the deviceinfo : %s", remoteAddr.c_str());
+		BT_DEBUG("Can't find the deviceinfo : %s for adapter %s ", remoteAddr.c_str(),adapterAddr.c_str());
 		return false;
 	}
 	int SCOStatus = status ? HFGeneral::Status::STATUSTRUE : HFGeneral::Status::STATUSFALSE;

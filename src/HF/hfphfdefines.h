@@ -26,6 +26,7 @@ namespace HFLS2
 	const std::string BTLSCALL = "luna://com.webos.service.bluetooth2/";
 	const std::string AUDIODLSCALL = "luna://com.webos.service.audio/";
 	const std::string LUNAGETSTATUS = "device/getStatus";
+	const std::string LUNAADAPTERGETSTATUS = "adapter/getStatus";
 	const std::string LUNASCOSTATUS = "hfp/getStatus";
 	const std::string LUNARECEIVERESULT = "hfp/receiveResult";
 	const std::string LUNASUBSCRIBE = "{\"subscribe\":true}";
@@ -38,6 +39,7 @@ namespace HFLS2
 		GETSTATUS,
 		RECEIVERESULT,
 		SCOSTATUS,
+		ADAPTERGETSTATUS,
 		MAXVALUE
 	};
 
@@ -47,6 +49,15 @@ namespace HFLS2
 		ADDRESS,
 		OBJECT,
 		TOKEN
+	};
+
+	enum ScoContextData
+	{
+		SCOAPINAME,
+		REMOTEADDRESS,
+		ADAPTERADDRESS,
+		SCOOBJECT,
+		SCOTOKEN
 	};
 }
 

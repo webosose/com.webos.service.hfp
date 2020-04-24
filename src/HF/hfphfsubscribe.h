@@ -30,5 +30,6 @@ public:
 	static bool receiveResultCallback(LSHandle* handle, LSMessage* reply, void* context);
 	static bool getSCOStatusCallback(LSHandle* handle, LSMessage* reply, void* context);
 	static bool registerService(LSHandle* sh, const char* serviceName, bool connected, void* ctx);
+	static bool getAdapterStatusCallback(LSHandle* handle, LSMessage* reply, void* context);
 };
 #endif

@@ -33,6 +33,8 @@ class HfpHFRole;
 class HfpOfonoManager;
 
 using LSContext = std::tuple<HFLS2::APIName, std::string, HfpHFRole*, LSMessageToken>;
+using LSScoContext = std::tuple<HFLS2::APIName, std::string, std::string , HfpHFRole*, LSMessageToken>;
+
 
 class HfpHFRole : public HfpRole
 {
@@ -57,24 +59,27 @@ public:
 	void sendResponseToClient(const std::string &remoteAddr, bool returnValue);
 	void notifySubscribersStatusChanged(bool subscribed);
 	void setVolumeToAudio(const std::string &remoteAddr);
-
-	void handleGetStatus(LSMessage* reply);
+	void handleAdapterGetStatus(LSMessage* reply);
+	void handleGetStatus(LSMessage* reply, const std::string &adapterAddr);
 	void handleReceiveResult(LSMessage* reply);
 	void handleGetSCOStatus(LSMessage* reply, const std::string &remoteAddr);
 	void subscribeService();
 	void unsubscribeServiceAll();
+	void unsubscribeScoServicebyAdapterAddress(const std::string &adapterAddr);
 
 private:
-	void buildGetStatusResp(const std::string &remoteAddr, const HfpDeviceInfo &localDevice, pbnjson::JValue &AGObj);
+	void buildGetStatusResp(const std::string &remoteAddr, const HfpDeviceInfo &localDevice, const std::string &adapterAddr, pbnjson::JValue &AGObj);
 	void notifySubscribersStatusChanged(bool subscribed, LS::Message &request);
 
 	void unsubscribeService(HFLS2::APIName apiName);
 	void unsubscribeService(const std::string &remoteAddr);
 	void unsubscribeService(int index);
-	void subscribeGetSCOStatus(const std::string &remoteAddr, bool connected);
+	void unsubscribeScoService(const std::string &remoteAddr, const std::string &adapterAddr);
+	void subscribeGetSCOStatus(const std::string &remoteAddr, const std::string& adapterAddress, bool connected);
+	void subscribeGetDeviceStatus(const std::string &adapterAddr, bool available);
 	int findContextIndex(HFLS2::APIName apiName);
 	int findContextIndex(const std::string &remoteAddr);
-
+	int findScoContextIndex(const std::string &remoteAddr, const std::string &adapterAddr);
 	bool handleSendAT(const std::string &remoteAddr, const std::string &type, const std::string &command, const std::string &arguments);
 	bool handleSendAT(const std::string &remoteAddr, const std::string &type, const std::string &command);
 	bool parseLSMessage(LSMessage &message, const HfpHFLS2Data &ls2Data, std::string &remoteAddr, LS2Result &result, bool isSubscribeFunc);
@@ -91,8 +96,10 @@ private:
 	HfpHFSubscribe* mHFSubscribe;
 	HfpHFLS2Call* mHFLS2Call;
 	std::vector<LSContext*> mContextList;
+	std::vector<LSScoContext*> mScoContextList;
 	HfpOfonoManager *mHfpOfonoManager;
 	DBusUtils::NameWatch mNameWatch;
+	std::unordered_map<std::string ,std::string> mAdapterMap; //address to name map
 };
 
 #endif

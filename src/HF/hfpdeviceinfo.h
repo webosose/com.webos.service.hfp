@@ -47,6 +47,7 @@ public:
 	std::string getCallStatus(const std::string &phoneNumber, int index);
 	int getCINDIndex(int index) const { return mCINDIndex[index]; }
 	CallStatusList getCallStatusList() const noexcept { return mCallStatus; }
+	std::string getAdapterAddress() const {return mAdapterAddress;}
 
 private:
 	void initialize();
@@ -60,5 +61,6 @@ private:
 	bool mIsReceivedRING;
 	int mCINDIndex[CIND::DeviceStatus::MAXSTATUS];
 	CallStatusList mCallStatus;
+	std::string mAdapterAddress;
 };
 #endif //__HFPDEVICEINFO_H_

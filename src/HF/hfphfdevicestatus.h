@@ -25,7 +25,8 @@
 
 class HfpHFRole;
 class HfpDeviceInfo;
-using HFDeviceList =  std::unordered_map<std::string, HfpDeviceInfo*>;
+//map is modified key is adapter address , internal map key is device address
+using HFDeviceList =  std::unordered_map<std::string ,std::unordered_map<std::string, HfpDeviceInfo*>>;
 
 class HfpHFDeviceStatus
 {
@@ -34,14 +35,17 @@ public:
 	~HfpHFDeviceStatus();
 
 	void updateStatus(const std::string &remoteAddr, std::string &resultCode);
-	bool createDeviceInfo(const std::string &remoteAddr);
-	bool removeDeviceInfo(const std::string &remoteAddr);
+	bool createDeviceInfo(const std::string &remoteAddr, const std::string &adapterAddr);
+	bool removeDeviceInfo(const std::string &remoteAddr, const std::string &adapterAddr);
+	bool removeAllDevicebyAdapterAddress(const std::string &adapterAddr);
 	HfpDeviceInfo* findDeviceInfo(const std::string &remoteAddr) const;
-	bool isDeviceAvailable(const std::string &remoteAddr) const;
+	HfpDeviceInfo* findDeviceInfo(const std::string &remoteAddr, const std::string &adapterAddr) const;
+	bool isDeviceAvailable(const std::string &remoteAddr , const std::string &adapterAddr) const;
+	bool isAdapterAvailable(const std::string &adapterAddr) const;
 	BluetoothErrorCode checkAddress(const std::string &remoteAddr) const;
 	bool isDeviceConnecting() const;
 	HFDeviceList getDeviceInfoList() const { return mHfpDeviceInfo; }
-	bool updateSCOStatus(const std::string &remoteAddr, bool status);
+	bool updateSCOStatus(const std::string &remoteAddr, const std::string &adapterAddr, bool status);
 	void updateAudioVolume(const std::string &remoteAddr, int volume, bool isUpdated);
 	void updateBVRAStatus(bool enabled) { mEnabledBVRA = enabled; }
 	bool getBVRAStatus() const { return mEnabledBVRA; }

@@ -28,7 +28,8 @@ bool HfpHFSubscribe::getStatusCallback(LSHandle* handle, LSMessage* reply, void*
 		return true;
 
 	HfpHFRole* selfHfpHFRole = std::get<HFLS2::ContextData::OBJECT>(*lsContext);
-	selfHfpHFRole->handleGetStatus(reply);
+	std::string adapterAddr = std::get<HFLS2::ContextData::ADDRESS>(*lsContext);
+	selfHfpHFRole->handleGetStatus(reply,adapterAddr);
 	return true;
 }
 
@@ -51,14 +52,13 @@ bool HfpHFSubscribe::getSCOStatusCallback(LSHandle* handle, LSMessage* reply, vo
 	if (context == nullptr)
 		return true;
 
-	LSContext* lsContext = static_cast<LSContext*>(context);
-	if (lsContext == nullptr)
+	LSScoContext* lsScoContext = static_cast<LSScoContext*>(context);
+	if (lsScoContext == nullptr)
 		return true;
 
-	HfpHFRole* selfHfpHFRole = std::get<HFLS2::ContextData::OBJECT>(*lsContext);
-	std::string remoteAddr = std::get<HFLS2::ContextData::ADDRESS>(*lsContext);
+	HfpHFRole* selfHfpHFRole = std::get<HFLS2::ScoContextData::SCOOBJECT>(*lsScoContext);
+	std::string remoteAddr = std::get<HFLS2::ScoContextData::REMOTEADDRESS>(*lsScoContext);
 	selfHfpHFRole->handleGetSCOStatus(reply, remoteAddr);
-
 	return true;
 }
 
@@ -73,5 +73,19 @@ bool HfpHFSubscribe::registerService(LSHandle* sh, const char* serviceName, bool
 	else
 		selfHfpHFRole->unsubscribeServiceAll();
 
+	return true;
+}
+
+bool HfpHFSubscribe::getAdapterStatusCallback(LSHandle* handle, LSMessage* reply, void* context)
+{
+	if (context == nullptr)
+		return true;
+
+	LSContext* lsContext = static_cast<LSContext*>(context);
+	if (lsContext == nullptr)
+		return true;
+
+	HfpHFRole* selfHfpHFRole = std::get<HFLS2::ContextData::OBJECT>(*lsContext);
+	selfHfpHFRole->handleAdapterGetStatus(reply);
 	return true;
 }
