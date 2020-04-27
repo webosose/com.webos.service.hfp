@@ -1,0 +1,23 @@
+{
+    "contexts" : [
+        {
+            "name" : "webos-hfp-service",
+            "level" : "debug",
+            "logProcessIds" : true,
+            "logThreadIds" : true,
+            "logToConsole" : false,
+            "rules" : [
+                {"filter" : "*.*", "output" : "webos-hfp-service-log"}
+            ]
+        }
+    ],
+
+    "outputs" : [
+        {
+            "name" : "webos-hfp-service-log",
+            "file" : "/var/log/webos-hfp-service.log",
+            "maxSize" : 100000,
+            "rotations" : 5
+        }
+    ]
+}

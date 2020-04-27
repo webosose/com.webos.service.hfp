@@ -1,0 +1,13 @@
+{
+    "role": {
+        "exeName":"@WEBOS_INSTALL_SBINDIR@/webos-hfp-service",
+        "type": "regular",
+        "allowedNames": ["com.webos.service.hfp"]
+    },
+    "permissions": [{
+        "service":"com.webos.service.hfp",
+        "inbound":["*"],
+        "outbound":["*"]
+    }]
+}
+
