@@ -834,7 +834,7 @@ void HfpHFRole::handleAdapterGetStatus(LSMessage* reply)
 			if (!adapterObj.hasKey("adapterAddress") || !adapterObj.hasKey("name"))
 				continue;
 
-			if(!adapterObj["adapterAddress"].asString().empty() || !adapterObj["name"].asString().empty())
+			if(adapterObj["adapterAddress"].asString().empty() || adapterObj["name"].asString().empty())
 				continue;
 
 			auto adapterAaddress = adapterObj["adapterAddress"].asString();

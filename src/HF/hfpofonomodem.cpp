@@ -100,7 +100,7 @@ void HfpOfonoModem::handleModemPropertyChanged(OfonoModem *proxy, char *name, GV
 		const char *serial = nullptr;
 		g_variant_get(va, "s", &serial);
 		if (serial)
-			pThis->mAddress = serial;
+			pThis->mAddress = convertToLowerCase(serial);
 	}
 }
 
@@ -177,7 +177,7 @@ void HfpOfonoModem::callAdded(HfpOfonoVoiceCall *voiceCall)
 {
 	std::string adapterAddress = getAdapterAddress();
 
-	HfpDeviceInfo *device = mHfpHFRole->getHfDevice()->findDeviceInfo(convertToLowerCase(mAddress), adapterAddress);
+	HfpDeviceInfo *device = mHfpHFRole->getHfDevice()->findDeviceInfo(mAddress, adapterAddress);
 	if (!device)
 	{
 		BT_ERROR("DEVICE NOT FOUND", 0, "%s", voiceCall->getLineIdentification().c_str());
@@ -200,7 +200,7 @@ void HfpOfonoModem::callAdded(HfpOfonoVoiceCall *voiceCall)
 
 void HfpOfonoModem::callRemoved(HfpOfonoVoiceCall *voiceCall)
 {
-	HfpDeviceInfo *device = mHfpHFRole->getHfDevice()->findDeviceInfo(convertToLowerCase(mAddress), getAdapterAddress());
+	HfpDeviceInfo *device = mHfpHFRole->getHfDevice()->findDeviceInfo(mAddress, getAdapterAddress());
 	if (!device)
 	{
 		BT_ERROR("DEVICE NOT FOUND", 0, "%s", voiceCall->getLineIdentification().c_str());
@@ -217,7 +217,7 @@ void HfpOfonoModem::callRemoved(HfpOfonoVoiceCall *voiceCall)
 
 void HfpOfonoModem::updateState(HfpOfonoVoiceCall *voiceCall)
 {
-	HfpDeviceInfo *device = mHfpHFRole->getHfDevice()->findDeviceInfo(convertToLowerCase(mAddress), getAdapterAddress());
+	HfpDeviceInfo *device = mHfpHFRole->getHfDevice()->findDeviceInfo(mAddress, getAdapterAddress());
 	if (!device)
 	{
 		BT_ERROR("DEVICE NOT FOUND", 0, "%s", voiceCall->getLineIdentification().c_str());
