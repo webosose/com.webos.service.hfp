@@ -38,7 +38,7 @@ public:
 	HfpOfonoModem& operator = (const HfpOfonoModem&) = delete;
 	void getModemProperties(OfonoModem *modemProxy);
 	bool isModemConnected() const;
-	HfpOfonoVoiceCallManager* getVoiceManager() const { return mVoiceCallManager; }
+	HfpOfonoVoiceCallManager* getVoiceCallManager() const { return mVoiceCallManager; }
 	std::string getAddress() const { return mAddress; }
 	void updateState(HfpOfonoVoiceCall *call);
 	void callAdded(HfpOfonoVoiceCall *voiceCall);

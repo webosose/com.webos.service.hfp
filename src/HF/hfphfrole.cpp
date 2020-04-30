@@ -24,6 +24,7 @@
 #include "hfphfsubscribe.h"
 #include "hfpofonomanager.h"
 #include "hfpofonomodem.h"
+#include "hfpofonovoicecall.h"
 #include "hfpofonovoicecallmanager.h"
 
 HfpHFRole::HfpHFRole(BluetoothHfpService *service) :
@@ -298,14 +299,58 @@ As for a successful call
  */
 bool HfpHFRole::answerCall(LSMessage &message)
 {
+	LS::Message request(&message);
 	std::string remoteAddr = "";
-	const std::string schema = STRICT_SCHEMA(PROPS_1(PROP(address, string))REQUIRED_1(address));
+	const std::string schema = STRICT_SCHEMA(PROPS_2(PROP(address, string), PROP(adapterAddress, string))REQUIRED_2(address, adapterAddress));
 	LS2ParamList localParam =
-                        {{"address", std::make_pair(HFGeneral::DataType::STRING, BT_ERR_ADDR_PARAM_MISSING)}};
+						{{"address", std::make_pair(HFGeneral::DataType::STRING, BT_ERR_ADDR_PARAM_MISSING)},
+						 {"adapterAddress", std::make_pair(HFGeneral::DataType::STRING, BT_ERR_ADAPTER_ADDR_PARAM_MISSING)}
+						};
+
 	LS2Result localResult;
 
-	if (parseLSMessage(message, HfpHFLS2Data(schema, localParam), remoteAddr, localResult, false))
-		handleSendAT(remoteAddr, "basic", "A");
+	if (parseLSMessage(message, HfpHFLS2Data(schema, localParam), remoteAddr, localResult, false, true))
+	{
+		std::string adapterAddress = mHFLS2Call->getParam(localResult, "adapterAddress");
+		auto modem = mHfpOfonoManager->getModem(adapterAddress, remoteAddr);
+		if (!modem)
+		{
+			LSUtils::respondWithError(request, BT_ERR_DEVICE_NOT_CONNECTED);
+			return true;
+		}
+
+		auto voiceCallManager = modem->getVoiceCallManager();
+		if (!voiceCallManager)
+		{
+			LSUtils::respondWithError(request, BT_ERR_DEVICE_NOT_CONNECTED);
+			return true;
+		}
+
+		auto voiceCall = voiceCallManager->getVoiceCall("incoming");
+		if (voiceCall)
+		{
+			if (voiceCall->answer())
+			{
+				pbnjson::JValue responseObj = pbnjson::Object();
+				responseObj.put("returnValue", true);
+				responseObj.put("address", remoteAddr);
+
+				LSUtils::postToClient(request, responseObj);
+				return true;
+			}
+			else
+			{
+				LSUtils::respondWithError(request, BT_ERR_ANSWER_CALL_FAILED);
+				return true;
+			}
+		}
+		else
+		{
+			LSUtils::respondWithError(request, BT_ERR_ANSWER_NO_INCOMING_CALL);
+		}
+	}
+
+	LSUtils::respondWithError(request, BT_ERR_ANSWER_CALL_FAILED);
 	return true;
 }
 
@@ -610,14 +655,14 @@ bool HfpHFRole::call(LSMessage &message)
 				return true;
 			}
 
-			auto voiceManager = modem->getVoiceManager();
-			if (!voiceManager)
+			auto voiceCallManager = modem->getVoiceCallManager();
+			if (!voiceCallManager)
 			{
 				LSUtils::respondWithError(request, BT_ERR_DEVICE_NOT_CONNECTED);
 				return true;
 			}
 
-			std::string voice = voiceManager->dial(number);
+			std::string voice = voiceCallManager->dial(number);
 			if (!voice.empty())
 			{
 				pbnjson::JValue responseObj = pbnjson::Object();

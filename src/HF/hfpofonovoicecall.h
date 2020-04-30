@@ -41,6 +41,7 @@ public:
 	HfpOfonoModem *getModem() const { return mHfpModem; }
 	std::string getCallState() const { return mState; }
 	std::string getLineIdentification() const { return mLineIdentification; }
+	bool answer();
 	static void handleVoiceCallPropertyChanged(OfonoVoiceCall *object, const gchar *name, GVariant *value, void *userData);
 
 private:
