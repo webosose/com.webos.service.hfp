@@ -35,7 +35,9 @@ static std::map<BluetoothErrorCode, std::string> bluetoothErrorTextTable =
 	{BT_ERR_CALL_PARAM_ERROR, "'number' and 'memoryDialing' parameters are not supplied together."},
 	{BT_ERR_VOLUME_PARAM_MISSING, "Required 'volume' paramter not supplied"},
 	{BT_ERR_ENABLED_PARAM_MISSING, "Required 'enabled' parameter not supplied"},
-	{BT_ERR_DEVICE_NOT_CONNECTED, "Device with supplied address is not connected"}
+	{BT_ERR_DEVICE_NOT_CONNECTED, "Device with supplied address is not connected"},
+	{BT_ERR_ANSWER_NO_INCOMING_CALL, "No voice call to answer"},
+	{BT_ERR_ANSWER_CALL_FAILED, "Answer call failed"}
 };
 
 const std::string retrieveErrorText(BluetoothErrorCode errorCode)

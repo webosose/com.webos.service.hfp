@@ -134,3 +134,16 @@ void HfpOfonoVoiceCall::handleVoiceCallPropertyChanged(OfonoVoiceCall *object, c
 	if (key == "State")
 		pThis->mHfpModem->updateState(pThis);
 }
+
+bool HfpOfonoVoiceCall::answer()
+{
+	GError *error = nullptr;
+	(void) ofono_voice_call_call_answer_sync (mOfonoVoiceCallProxy, NULL, &error);
+	if (error)
+	{
+		BT_ERROR("ANSWER_CALL_FAILED", 0, "reason %s", error->message);
+		return false;
+	}
+
+	return true;
+}

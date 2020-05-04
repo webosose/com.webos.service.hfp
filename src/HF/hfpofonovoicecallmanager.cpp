@@ -75,6 +75,19 @@ std::string HfpOfonoVoiceCallManager::dial(const std::string &phoneNumber)
 	return callId;
 }
 
+HfpOfonoVoiceCall* HfpOfonoVoiceCallManager::getVoiceCall(const std::string &state)
+{
+	BT_DEBUG("getVoiceCall with state %s", state.c_str());
+
+	for (auto it = mCallMap.begin(); it != mCallMap.end(); it++)
+	{
+		if (it->second->getCallState() == state)
+			return it->second.get();
+	}
+
+	return nullptr;
+}
+
 void HfpOfonoVoiceCallManager::handleCallAdded(OfonoVoiceCallManager *object, const gchar *path, GVariant *properties, void *userData)
 {
 	HfpOfonoVoiceCallManager *pThis = static_cast<HfpOfonoVoiceCallManager*>(userData);
