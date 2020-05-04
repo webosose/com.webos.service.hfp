@@ -1,0 +1,14 @@
+{
+    "bluetooth.manage":[
+        "com.webos.service.hfp/hf/getStatus",
+        "com.webos.service.hfp/hf/answerCall",
+        "com.webos.service.hfp/hf/terminateCall",
+        "com.webos.service.hfp/hf/releaseHeldCalls",
+        "com.webos.service.hfp/hf/releaseActiveCalls",
+        "com.webos.service.hfp/hf/holdActiveCalls",
+        "com.webos.service.hfp/hf/mergeCall",
+        "com.webos.service.hfp/hf/call",
+        "com.webos.service.hfp/hf/setVolume",
+        "com.webos.service.hfp/hf/setVoiceRecognition"
+    ]
+}
