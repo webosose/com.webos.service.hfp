@@ -37,7 +37,11 @@ static std::map<BluetoothErrorCode, std::string> bluetoothErrorTextTable =
 	{BT_ERR_ENABLED_PARAM_MISSING, "Required 'enabled' parameter not supplied"},
 	{BT_ERR_DEVICE_NOT_CONNECTED, "Device with supplied address is not connected"},
 	{BT_ERR_ANSWER_NO_INCOMING_CALL, "No voice call to answer"},
-	{BT_ERR_ANSWER_CALL_FAILED, "Answer call failed"}
+	{BT_ERR_ANSWER_CALL_FAILED, "Answer call failed"},
+	{BT_ERR_INDEX_PARAM_MISSING, "VoiceCall Index is missing"},
+	{BT_ERR_TERMINATE_CALL_FAILED, "Terminate call failed"},
+	{BT_ERR_NO_VOICE_CALL_FOUND, "No voice call found"},
+	{BT_ERR_ADAPTER_IS_NOT_AVAILABLE, "Adapter is not available"}
 };
 
 const std::string retrieveErrorText(BluetoothErrorCode errorCode)

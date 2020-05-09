@@ -147,3 +147,16 @@ bool HfpOfonoVoiceCall::answer()
 
 	return true;
 }
+
+bool HfpOfonoVoiceCall::hangup()
+{
+	GError *error = nullptr;
+	(void) ofono_voice_call_call_hangup_sync (mOfonoVoiceCallProxy, NULL, &error);
+	if (error)
+	{
+		BT_ERROR("HANGUP_CALL_FAILED", 0, "reason %s", error->message);
+		return false;
+	}
+
+	return true;
+}

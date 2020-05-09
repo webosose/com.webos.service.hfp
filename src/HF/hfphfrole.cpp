@@ -26,6 +26,7 @@
 #include "hfpofonomodem.h"
 #include "hfpofonovoicecall.h"
 #include "hfpofonovoicecallmanager.h"
+#include <sstream>
 
 HfpHFRole::HfpHFRole(BluetoothHfpService *service) :
         HfpRole(service),
@@ -301,7 +302,7 @@ bool HfpHFRole::answerCall(LSMessage &message)
 {
 	LS::Message request(&message);
 	std::string remoteAddr = "";
-	const std::string schema = STRICT_SCHEMA(PROPS_2(PROP(address, string), PROP(adapterAddress, string))REQUIRED_2(address, adapterAddress));
+	const std::string schema = STRICT_SCHEMA(PROPS_2(PROP(address, string), PROP(adapterAddress, string))REQUIRED_1(address));
 	LS2ParamList localParam =
 						{{"address", std::make_pair(HFGeneral::DataType::STRING, BT_ERR_ADDR_PARAM_MISSING)},
 						 {"adapterAddress", std::make_pair(HFGeneral::DataType::STRING, BT_ERR_ADAPTER_ADDR_PARAM_MISSING)}
@@ -312,6 +313,16 @@ bool HfpHFRole::answerCall(LSMessage &message)
 	if (parseLSMessage(message, HfpHFLS2Data(schema, localParam), remoteAddr, localResult, false, true))
 	{
 		std::string adapterAddress = mHFLS2Call->getParam(localResult, "adapterAddress");
+		if (adapterAddress.empty())
+		{
+			adapterAddress = getDefaultAdapterAddress();
+			if (adapterAddress.empty())
+			{
+				LSUtils::respondWithError(request, BT_ERR_ADAPTER_IS_NOT_AVAILABLE);
+				return true;
+			}
+		}
+
 		auto modem = mHfpOfonoManager->getModem(adapterAddress, remoteAddr);
 		if (!modem)
 		{
@@ -379,15 +390,80 @@ As for a successful call
  */
 bool HfpHFRole::terminateCall(LSMessage &message)
 {
+	LS::Message request(&message);
 	std::string remoteAddr = "";
-	std::string index = "";
-	const std::string schema = STRICT_SCHEMA(PROPS_1(PROP(address, string))REQUIRED_1(address));
+	const std::string schema = STRICT_SCHEMA(PROPS_3(PROP(address, string), PROP(adapterAddress, string), PROP(index, integer))REQUIRED_2(address, index));
 	LS2ParamList localParam =
-                        {{"address", std::make_pair(HFGeneral::DataType::STRING, BT_ERR_ADDR_PARAM_MISSING)}};
+						{{"address", std::make_pair(HFGeneral::DataType::STRING, BT_ERR_ADDR_PARAM_MISSING)},
+						 {"index", std::make_pair(HFGeneral::DataType::INTEGER, BT_ERR_INDEX_PARAM_MISSING)},
+						 {"adapterAddress", std::make_pair(HFGeneral::DataType::STRING, BT_ERR_ADAPTER_ADDR_PARAM_MISSING)}
+						};
+
 	LS2Result localResult;
 
-	if (parseLSMessage(message, HfpHFLS2Data(schema, localParam), remoteAddr, localResult, false))
-		handleSendAT(remoteAddr, "action", "CHUP");
+	if (parseLSMessage(message, HfpHFLS2Data(schema, localParam), remoteAddr, localResult, false, true))
+	{
+		std::string index = mHFLS2Call->getParam(localResult, "index");
+		if (index.empty())
+		{
+			LSUtils::respondWithError(request, BT_ERR_INDEX_PARAM_MISSING);
+			return true;
+		}
+
+		std::string adapterAddress = mHFLS2Call->getParam(localResult, "adapterAddress");
+		if (adapterAddress.empty())
+		{
+			adapterAddress = getDefaultAdapterAddress();
+			if (adapterAddress.empty())
+			{
+				LSUtils::respondWithError(request, BT_ERR_ADAPTER_IS_NOT_AVAILABLE);
+				return true;
+			}
+		}
+
+		auto modem = mHfpOfonoManager->getModem(adapterAddress, remoteAddr);
+		if (!modem)
+		{
+			LSUtils::respondWithError(request, BT_ERR_DEVICE_NOT_CONNECTED);
+			return true;
+		}
+
+		auto voiceCallManager = modem->getVoiceCallManager();
+		if (!voiceCallManager)
+		{
+			LSUtils::respondWithError(request, BT_ERR_DEVICE_NOT_CONNECTED);
+			return true;
+		}
+
+		std::stringstream indexStrStream(index);
+
+		int idx = 0;
+		indexStrStream >> idx;
+
+		auto voiceCall = voiceCallManager->getVoiceCall(idx);
+		if (voiceCall)
+		{
+			if (voiceCall->hangup())
+			{
+				pbnjson::JValue responseObj = pbnjson::Object();
+				responseObj.put("returnValue", true);
+
+				LSUtils::postToClient(request, responseObj);
+				return true;
+			}
+			else
+			{
+				LSUtils::respondWithError(request, BT_ERR_TERMINATE_CALL_FAILED);
+				return true;
+			}
+		}
+		else
+		{
+			LSUtils::respondWithError(request, BT_ERR_NO_VOICE_CALL_FOUND);
+		}
+	}
+
+	LSUtils::respondWithError(request, BT_ERR_TERMINATE_CALL_FAILED);
 	return true;
 }
 
@@ -632,7 +708,7 @@ bool HfpHFRole::call(LSMessage &message)
 	LS::Message request(&message);
 	std::string remoteAddr = "";
 	const std::string schema = STRICT_SCHEMA(PROPS_4(PROP(address, string),PROP(adapterAddress, string),PROP(number, string),PROP(memoryDialing,integer))
-                                                REQUIRED_2(address, adapterAddress));
+                                                REQUIRED_1(address));
 	LS2ParamList paramList =
                         {{"address", std::make_pair(HFGeneral::DataType::STRING, BT_ERR_ADDR_PARAM_MISSING)},
                         {"adapterAddress", std::make_pair(HFGeneral::DataType::STRING, BT_ERR_ADAPTER_ADDR_PARAM_MISSING)},
@@ -648,6 +724,17 @@ bool HfpHFRole::call(LSMessage &message)
 
 		if(!number.empty())
 		{
+			std::string adapterAddress = mHFLS2Call->getParam(localResult, "adapterAddress");
+			if (adapterAddress.empty())
+			{
+				adapterAddress = getDefaultAdapterAddress();
+				if (adapterAddress.empty())
+				{
+					LSUtils::respondWithError(request, BT_ERR_ADAPTER_IS_NOT_AVAILABLE);
+					return true;
+				}
+			}
+
 			auto modem = mHfpOfonoManager->getModem(adapterAddress, remoteAddr);
 			if (!modem)
 			{
@@ -668,7 +755,6 @@ bool HfpHFRole::call(LSMessage &message)
 				pbnjson::JValue responseObj = pbnjson::Object();
 
 				responseObj.put("returnValue", true);
-				responseObj.put("address", remoteAddr);
 
 				LSUtils::postToClient(request, responseObj);
 				return true;
@@ -777,11 +863,14 @@ bool HfpHFRole::parseLSMessage(LSMessage &message, const HfpHFLS2Data &ls2Data, 
 		if (isMultiAdapterSupport)
 		{
 			std::string adapterAddress = mHFLS2Call->getParam(result, "adapterAddress");
+			if (adapterAddress.empty())
+				adapterAddress = getDefaultAdapterAddress();
 			return handleOneReplyFunc(request, remoteAddr, adapterAddress);
 		}
 		return handleOneReplyFunc(request, remoteAddr);
 	}
 }
+
 
 void HfpHFRole::handleSubscribeFunc(LS::Message &request)
 {
@@ -1148,3 +1237,32 @@ int HfpHFRole::findScoContextIndex(const std::string &remoteAddr, const std::str
 	return HFLS2::INVALIDINDEX;
 }
 
+std::string HfpHFRole::getDefaultAdapterAddress() const
+{
+	std::string hciName = "hci0";
+
+	if (mAdapterMap.size() == 1)
+	{
+		auto adapter = mAdapterMap.begin();
+		return adapter->first;
+	}
+
+	 for (auto adapter = mAdapterMap.begin(); adapter != mAdapterMap.end(); adapter++)
+	 {
+		std::string adapterName = adapter->second;
+		auto it = hciName.begin();
+		bool matching = adapterName.size() >= hciName.size() &&
+				std::all_of (std::next(adapterName.begin(),
+				                       adapterName.size() - hciName.size()),
+				                       adapterName.end(),
+				                       [&it](const char & c)
+				                       {
+					                        return c == *(it++);
+				                       }
+				            );
+		if (matching)
+			return adapter->first;
+	 }
+	 //On failure return empty string
+	 return std::string();
+}

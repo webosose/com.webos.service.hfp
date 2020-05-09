@@ -90,6 +90,7 @@ private:
 	bool handleOneReplyFunc(LS::Message &request, const std::string &remoteAddr, std::string &adapterAddress);
 	void createOfonoManager();
 	void destroyOfonoManager();
+	std::string getDefaultAdapterAddress() const;
 
 private:
 	LS::SubscriptionPoint* mGetStatusSubscription;
