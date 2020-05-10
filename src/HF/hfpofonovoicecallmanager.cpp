@@ -88,6 +88,33 @@ HfpOfonoVoiceCall* HfpOfonoVoiceCallManager::getVoiceCall(const std::string &sta
 	return nullptr;
 }
 
+HfpOfonoVoiceCall* HfpOfonoVoiceCallManager::getVoiceCall(int idx)
+{
+	std::string index = std::to_string(idx);
+
+	if (index.length() == 1)
+	{
+		index = "voicecall0" + index;
+	}
+	else
+	{
+		index = "voicecall" + index;
+	}
+
+	BT_DEBUG("getVoiceCall with index %s", index.c_str());
+
+	for (auto it = mCallMap.begin(); it != mCallMap.end(); it++)
+	{
+		std::size_t found = it->first.find("voicecall");
+		if (found != std::string::npos)
+		{
+			if (it->first.substr(found) == index)
+				return it->second.get();
+		}
+	}
+	return nullptr;
+}
+
 void HfpOfonoVoiceCallManager::handleCallAdded(OfonoVoiceCallManager *object, const gchar *path, GVariant *properties, void *userData)
 {
 	HfpOfonoVoiceCallManager *pThis = static_cast<HfpOfonoVoiceCallManager*>(userData);

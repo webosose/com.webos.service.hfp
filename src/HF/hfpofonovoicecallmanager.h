@@ -38,6 +38,7 @@ public:
 
 	std::string dial(const std::string &phoneNumber);
 	HfpOfonoVoiceCall* getVoiceCall(const std::string &state);
+	HfpOfonoVoiceCall* getVoiceCall(int index);
 
 	static void handleCallAdded(OfonoVoiceCallManager *object, const gchar *path, GVariant *properties, void *userData);
 	static void handleCallRemoved(OfonoVoiceCallManager *object, const gchar *path, void *userData);
