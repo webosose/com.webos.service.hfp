@@ -28,6 +28,8 @@
 #include "hfpofonovoicecallmanager.h"
 #include <sstream>
 
+#include <stdio.h>
+
 HfpHFRole::HfpHFRole(BluetoothHfpService *service) :
         HfpRole(service),
         mGetStatusSubscription(nullptr),
@@ -926,7 +928,7 @@ void HfpHFRole::handleAdapterGetStatus(LSMessage* reply)
 		return;
 
 	auto adaptersObjArray = replyObj["adapters"];
-	BT_DEBUG("Size %d exizsting adapter %d",adaptersObjArray.arraySize(),mAdapterMap.size());
+	BT_DEBUG("Size %zd existing adapter %zd", adaptersObjArray.arraySize(),mAdapterMap.size());
 	if(adaptersObjArray.arraySize() < mAdapterMap.size())
 	{
 		BT_DEBUG("Removing Adapter");
@@ -934,7 +936,7 @@ void HfpHFRole::handleAdapterGetStatus(LSMessage* reply)
 		while(itr != mAdapterMap.end())
 		{
 			bool found = false;
-			for(int i = 0; i<adaptersObjArray.arraySize();i++)
+			for(int i = 0; i < adaptersObjArray.arraySize();i++)
 			{
 				auto adapterObj = adaptersObjArray[i];
 				if (!adapterObj.hasKey("adapterAddress") || !adapterObj.hasKey("name"))
@@ -943,13 +945,14 @@ void HfpHFRole::handleAdapterGetStatus(LSMessage* reply)
 				auto adapterAaddress = adapterObj["adapterAddress"].asString();
 				if(itr->first ==  adapterAaddress)
 				{
-					found == true;
+					found = true;
 					break;
 				}
 			}
 
 			if(!found)
 			{
+				BT_DEBUG("Removing Adapter %s from map", itr->second.c_str());
 				unsubscribeService(itr->first);
 				itr = mAdapterMap.erase(itr);
 			}
@@ -959,7 +962,7 @@ void HfpHFRole::handleAdapterGetStatus(LSMessage* reply)
 			}
 		}
 	}
-	else
+	else if (adaptersObjArray.arraySize() > mAdapterMap.size())
 	{
 		for (int i = 0; i < adaptersObjArray.arraySize(); i++)
 		{
@@ -968,7 +971,9 @@ void HfpHFRole::handleAdapterGetStatus(LSMessage* reply)
 			if (!adapterObj.hasKey("adapterAddress") || !adapterObj.hasKey("name"))
 				continue;
 
-			if(adapterObj["adapterAddress"].asString().empty() || adapterObj["name"].asString().empty())
+			auto powered = adapterObj["powered"].asBool();
+
+			if(adapterObj["adapterAddress"].asString().empty() || adapterObj["name"].asString().empty() || !powered)
 				continue;
 
 			auto adapterAaddress = adapterObj["adapterAddress"].asString();
@@ -976,7 +981,17 @@ void HfpHFRole::handleAdapterGetStatus(LSMessage* reply)
 			auto itr = mAdapterMap.find(adapterAaddress.c_str());
 			if(itr == mAdapterMap.end() && !adapterName.empty() && !adapterAaddress.empty())
 			{
-				BT_DEBUG("Adding Adapter %s",adapterName.c_str());
+				BT_DEBUG("Adding Adapter %s powered %d",adapterName.c_str(), powered);
+				//Enable SCO routing
+				std::size_t found = adapterName.find("hci");
+				if (found != std::string::npos)
+				{
+					std::string hcitool = "hcitool";
+					std::string hcicmd = "0x3F 0x01C 0x01 0x02 0x00 0x01 0x01 &";
+					std::string hcidevice = adapterName.substr(found);
+					std::string cmd = hcitool +  " -i " + hcidevice + std::string(" cmd ") + hcicmd;
+					system(cmd.c_str());
+				}
 				mAdapterMap.insert(std::make_pair(adapterAaddress,adapterName));
 				subscribeGetDeviceStatus(adapterAaddress,true);
 			}
