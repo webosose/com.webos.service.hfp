@@ -285,7 +285,8 @@ void HfpAGRole::phoneNumberCb(const pbnjson::JValue &replyObj)
 
 		if (extendedObj.hasKey("number"))
 		{
-			const char *number = extendedObj["number"].asString().c_str();
+			std::string numStr = extendedObj["number"].asString();
+			const char *number = numStr.c_str();
 
 			snprintf(buf + offset, sizeof(buf) - offset, ",\"%s\",%d,,4", number, *number == '+' ? TYPE_INTERNATIONAL : TYPE_NATIONAL);
 		}
@@ -373,7 +374,7 @@ void HfpAGRole::indicateCall(const std::string &number)
 		address.c_str(), number.c_str());
 	LSCall(getService()->get(), "luna://com.webos.service.bluetooth2/hfp/indicateCall",
 		param, indicateCallCb, nullptr, &mIndicateToken, nullptr);
-	BT_DEBUG("indicateCall(address:%s, number:%s, token:%d)", address.c_str(), number.c_str(), mIndicateToken);
+	BT_DEBUG("indicateCall(address:%s, number:%s, token:%lu)", address.c_str(), number.c_str(), mIndicateToken);
 }
 
 void HfpAGRole::requestSCOchannel(bool isOpen, const std::string &address)

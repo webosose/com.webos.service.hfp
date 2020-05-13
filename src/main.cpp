@@ -32,45 +32,52 @@ static GOptionEntry options[] = {
 
 int main(int argc, char **argv)
 {
-	GMainLoop *mainLoop;
-	GOptionContext *context;
-	GError *err = NULL;
-
-	context = g_option_context_new(NULL);
-	g_option_context_add_main_entries(context, options, NULL);
-
-	if (g_option_context_parse(context, &argc, &argv, &err) == FALSE) {
-		if (err != NULL) {
-			g_printerr("%s\n", err->message);
-			g_error_free(err);
-		} else
-			g_printerr("An unknown error occurred\n");
-		exit(1);
-	}
-
-	g_option_context_free(context);
-
-	if (option_version == TRUE) {
-		printf("%s\n", VERSION);
-		exit(0);
-	}
-
-	PmLogErr error = PmLogGetContext(logContextName, &logContext);
-	if (error != kPmLogErr_None)
+	try
 	{
-		fprintf(stderr, "Failed to setup up log context %s\n", logContextName);
-		abort();
+		GMainLoop *mainLoop;
+		GOptionContext *context;
+		GError *err = NULL;
+
+		context = g_option_context_new(NULL);
+		g_option_context_add_main_entries(context, options, NULL);
+
+		if (g_option_context_parse(context, &argc, &argv, &err) == FALSE) {
+			if (err != NULL) {
+				g_printerr("%s\n", err->message);
+				g_error_free(err);
+			} else
+				g_printerr("An unknown error occurred\n");
+			exit(1);
+		}
+
+		g_option_context_free(context);
+
+		if (option_version == TRUE) {
+			printf("%s\n", VERSION);
+			exit(0);
+		}
+
+		PmLogErr error = PmLogGetContext(logContextName, &logContext);
+		if (error != kPmLogErr_None)
+		{
+			fprintf(stderr, "Failed to setup up log context %s\n", logContextName);
+			abort();
+		}
+
+		mainLoop = g_main_loop_new(NULL, FALSE);
+
+		BluetoothHfpService service;
+		service.attachToLoop(mainLoop);
+
+		g_main_loop_run(mainLoop);
+
+		g_main_loop_unref(mainLoop);
+
 	}
-
-	mainLoop = g_main_loop_new(NULL, FALSE);
-
-	BluetoothHfpService service;
-	service.attachToLoop(mainLoop);
-
-	g_main_loop_run(mainLoop);
-
-	g_main_loop_unref(mainLoop);
-
+	catch (const LS::Error& error) // 	CID 163476 (#1 of 1): Uncaught exception (UNCAUGHT_EXCEPT)
+	{
+		BT_ERROR("BT_EXCEPTION", 0, "Failed to LS::Error: %s", error.what());
+	}
 	return 0;
 }
 

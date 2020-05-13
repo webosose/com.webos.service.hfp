@@ -143,7 +143,7 @@ bool HfpAGSubscribe::subscribe(SubscribeCbType cbType)
 		return false;
 
 	bool result = false;
-	BT_DEBUG("subscribe 1.mLSCallToken[%d]:%d", cbType, mLSCallToken[cbType]);
+	BT_DEBUG("subscribe 1.mLSCallToken[%d]:%lu", cbType, mLSCallToken[cbType]);
 	if (LSMESSAGE_TOKEN_INVALID != mLSCallToken[cbType])
 		return false;
 
@@ -153,7 +153,7 @@ bool HfpAGSubscribe::subscribe(SubscribeCbType cbType)
 	else
 		result = LSCallOneReply(mHandle, subscribe->second.uri.c_str(), subscribe->second.payload.c_str(), HfpAGSubscribe::subscribeCb,
 			&(subscribe->second), &mLSCallToken[cbType], nullptr);
-	BT_DEBUG("subscribe 2.mLSCallToken[%d]:%d", cbType, mLSCallToken[cbType]);
+	BT_DEBUG("subscribe 2.mLSCallToken[%d]:%lu", cbType, mLSCallToken[cbType]);
 
 	return result;
 }
@@ -164,7 +164,7 @@ bool HfpAGSubscribe::cancelSubscribe(SubscribeCbType cbType)
 		return false;
 
 	bool result = false;
-	BT_DEBUG("cancelSubscribe mLSCallToken[%d]:%d", cbType, mLSCallToken[cbType]);
+	BT_DEBUG("cancelSubscribe mLSCallToken[%d]:%lu", cbType, mLSCallToken[cbType]);
 	LSError lserror;
 	LSErrorInit(&lserror);
 	result = LSCallCancel(mHandle, mLSCallToken[cbType], &lserror);

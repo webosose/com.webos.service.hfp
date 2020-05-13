@@ -278,6 +278,9 @@ void HfpHFDeviceStatus::updateCLCC(const std::string &remoteAddr, const std::str
 bool HfpHFDeviceStatus::isCallActive(const std::string &remoteAddr)
 {
 	HfpDeviceInfo* localDevice = findDeviceInfo(remoteAddr);
+	if (!localDevice)
+		return false;
+
 	if (localDevice->getDeviceStatus(CIND::DeviceStatus::CALL) == CIND::Call::INACTIVE)
 		return false;
 
@@ -458,7 +461,7 @@ void HfpHFDeviceStatus::setCINDValue(const std::string &remoteAddr, const std::s
 	if (mTempDeviceInfo != nullptr)
 	{
 		int firstIndex = 0;
-		for (int i; i < CIND::DeviceStatus::MAXSTATUS; i++)
+		for (int i = CIND::DeviceStatus::SERVICE; i < CIND::DeviceStatus::MAXSTATUS; i++)
 		{
 			std::string sValue = arguments.substr(firstIndex, 1);
 			int iValue = std::stoi(sValue);

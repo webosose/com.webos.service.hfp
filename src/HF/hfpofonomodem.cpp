@@ -35,6 +35,10 @@ mHfpHFRole(role),
 mObjectPath(objectPath),
 mOfonoModemProxy(nullptr),
 mVoiceCallManager(nullptr),
+mEmergency(false),
+mLockDown(false),
+mOnline(false),
+mPowered(false),
 mAddress("")
 {
 	BT_DEBUG("ofonoModem instance created");
