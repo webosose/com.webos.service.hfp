@@ -79,7 +79,7 @@ void dump(const uint8_t *data, size_t len, const char *ind)
         int i, j;
 
         if (!ind) ind = "";
-        printf("%sdump %p %d\n%s", ind, data, len, ind);
+        printf("%sdump %p %zu \n %s", (char *) ind, data, len, (char *) ind);
 
         if (!data) return;
 

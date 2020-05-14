@@ -24,13 +24,19 @@
 #include "config.h"
 
 BluetoothHfpService::BluetoothHfpService() :
-	LS::Handle("com.webos.service.hfp")
+	LS::Handle("com.webos.service.hfp"),
+	mAGRole(nullptr),
+	mHFRole(nullptr)
 {
 	initialize();
 }
 
 BluetoothHfpService::~BluetoothHfpService()
 {
+	if (mHFRole)
+		delete mHFRole;
+	if (mAGRole)
+		delete mAGRole;
 }
 
 void BluetoothHfpService::initialize()

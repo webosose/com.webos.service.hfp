@@ -217,11 +217,18 @@ void HfpHFRole::subscribeService()
 
 	unsubscribeService(HFLS2::APIName::RECEIVERESULT);
 	index = findContextIndex(HFLS2::APIName::RECEIVERESULT);
-	lunaCmd = HFLS2::BTLSCALL + HFLS2::LUNARECEIVERESULT;
-	LSCall(this->mLSHandle, lunaCmd.c_str(), HFLS2::LUNASUBSCRIBE.c_str(), mHFSubscribe->receiveResultCallback,
-                mContextList[index], &std::get<HFLS2::ContextData::TOKEN>(*mContextList[index]), &lserror);
+	if (index != HFLS2::INVALIDINDEX)
+	{
+		lunaCmd = HFLS2::BTLSCALL + HFLS2::LUNARECEIVERESULT;
+		LSCall(this->mLSHandle, lunaCmd.c_str(), HFLS2::LUNASUBSCRIBE.c_str(), mHFSubscribe->receiveResultCallback,
+			   mContextList[index], &std::get<HFLS2::ContextData::TOKEN>(*mContextList[index]), &lserror);
 
-	BT_DEBUG("LS2 subscription is success");
+		BT_DEBUG("LS2 subscription is success");
+	}
+	else
+	{
+		BT_DEBUG("LS2 subscription is failed as index is invalid");
+	}
 }
 
 void HfpHFRole::subscribeGetDeviceStatus(const std::string &adapterAddr, bool available)
@@ -236,8 +243,11 @@ void HfpHFRole::subscribeGetDeviceStatus(const std::string &adapterAddr, bool av
 		std::string payload = "{\"subscribe\":true, \"adapterAddress\":\"" + adapterAddr + "\"}";
 		mContextList.push_back(new LSContext(HFLS2::APIName::GETSTATUS, adapterAddr, this, LSMESSAGE_TOKEN_INVALID));
 		int index = findContextIndex(adapterAddr);
-		LSCall(this->mLSHandle, lunaCmd.c_str(), payload.c_str(), mHFSubscribe->getStatusCallback,
-	                   mContextList[index], &std::get<HFLS2::ContextData::TOKEN>(*mContextList[index]), nullptr);
+		if (index != HFLS2::INVALIDINDEX)
+		{
+			LSCall(this->mLSHandle, lunaCmd.c_str(), payload.c_str(), mHFSubscribe->getStatusCallback,
+				   mContextList[index], &std::get<HFLS2::ContextData::TOKEN>(*mContextList[index]), nullptr);
+		}
 	}
 }
 
@@ -259,8 +269,15 @@ void HfpHFRole::subscribeGetSCOStatus(const std::string &remoteAddr, const std::
 		//std::string payload = "{\"subscribe\":true, \"address\":\"" + remoteAddr + ""\" ,\"address\":\"+ }";
 		mScoContextList.push_back(new LSScoContext(HFLS2::APIName::SCOSTATUS, remoteAddr, adapterAddress, this, LSMESSAGE_TOKEN_INVALID));
 		int index = findScoContextIndex(remoteAddr ,adapterAddress);
-		LSCall(this->mLSHandle, lunaCmd.c_str(), payload.c_str(), mHFSubscribe->getSCOStatusCallback,
-                       mScoContextList[index], &std::get<HFLS2::ScoContextData::SCOTOKEN>(*mScoContextList[index]), nullptr);
+		if (index != HFLS2::INVALIDINDEX)
+		{
+			LSCall(this->mLSHandle, lunaCmd.c_str(), payload.c_str(), mHFSubscribe->getSCOStatusCallback,
+				   mScoContextList[index], &std::get<HFLS2::ScoContextData::SCOTOKEN>(*mScoContextList[index]), nullptr);
+		}
+		else
+		{
+			BT_DEBUG("subscrption failed as index is invalid");
+		}
 	}
 }
 
@@ -921,14 +938,14 @@ void HfpHFRole::handleAdapterGetStatus(LSMessage* reply)
 	BT_DEBUG("");
 	LS::Message replyMsg(reply);
 	pbnjson::JValue replyObj;
-	bool isAdapterRemoved = false;
+
 	if (!mHFLS2Call->parseSubscriptionData(replyMsg, replyObj))
 		return;
 	if (!replyObj.hasKey("adapters"))
 		return;
 
 	auto adaptersObjArray = replyObj["adapters"];
-	BT_DEBUG("Size %zd existing adapter %zd", adaptersObjArray.arraySize(),mAdapterMap.size());
+	BT_DEBUG("Size %zu existing adapter %zu", adaptersObjArray.arraySize(),mAdapterMap.size());
 	if(adaptersObjArray.arraySize() < mAdapterMap.size())
 	{
 		BT_DEBUG("Removing Adapter");

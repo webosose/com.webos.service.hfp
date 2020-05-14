@@ -47,8 +47,6 @@ private:
 	HfpOfonoModem* mModem;
 	std::string mObjectPath;
 	OfonoVoiceCallManager* mOfonoVoiceCallManagerProxy;
-	gulong mSignalCallAddded;
-	gulong mSignalCallRemoved;
 	std::unordered_map <std::string, std::unique_ptr <HfpOfonoVoiceCall>> mCallMap;
 };
 
