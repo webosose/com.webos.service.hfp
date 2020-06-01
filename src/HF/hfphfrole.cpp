@@ -592,21 +592,74 @@ As for a successful call
  */
 bool HfpHFRole::holdActiveCalls(LSMessage &message)
 {
+	LS::Message request(&message);
 	std::string remoteAddr = "";
-	std::string param = "";
-	const std::string schema = STRICT_SCHEMA(PROPS_2(PROP(address, string),PROP(index, integer))REQUIRED_1(address));
-	LS2ParamList paramList =
-                        {{"address", std::make_pair(HFGeneral::DataType::STRING, BT_ERR_ADDR_PARAM_MISSING)},
-                        {"index", std::make_pair(HFGeneral::DataType::INTEGER, BT_ERR_SCHEMA_VALIDATION_FAIL)}};
+	const std::string schema = STRICT_SCHEMA(PROPS_2(PROP(address, string), PROP(adapterAddress, string))REQUIRED_1(address));
+	LS2ParamList localParam =
+						{{"address", std::make_pair(HFGeneral::DataType::STRING, BT_ERR_ADDR_PARAM_MISSING)},
+						 {"adapterAddress", std::make_pair(HFGeneral::DataType::STRING, BT_ERR_ADAPTER_ADDR_PARAM_MISSING)}
+						};
+
 	LS2Result localResult;
-	if (parseLSMessage(message, HfpHFLS2Data(schema, paramList), remoteAddr, localResult, false))
+
+	if (parseLSMessage(message, HfpHFLS2Data(schema, localParam), remoteAddr, localResult, false, true))
 	{
-		std::string index = mHFLS2Call->getParam(localResult, "index");
-		if (!index.empty())
-			handleSendAT(remoteAddr, "set", "CHLD", "2<" + index + ">");
+		std::string adapterAddress = mHFLS2Call->getParam(localResult, "adapterAddress");
+		if (adapterAddress.empty())
+		{
+			adapterAddress = getDefaultAdapterAddress();
+			if (adapterAddress.empty())
+			{
+				LSUtils::respondWithError(request, BT_ERR_ADAPTER_IS_NOT_AVAILABLE);
+				return true;
+			}
+		}
+
+		auto modem = mHfpOfonoManager->getModem(adapterAddress, remoteAddr);
+		if (!modem)
+		{
+			LSUtils::respondWithError(request, BT_ERR_DEVICE_NOT_CONNECTED);
+			return true;
+		}
+
+		auto voiceCallManager = modem->getVoiceCallManager();
+		if (!voiceCallManager)
+		{
+			LSUtils::respondWithError(request, BT_ERR_DEVICE_NOT_CONNECTED);
+			return true;
+		}
+
+		auto activeVoiceCall = voiceCallManager->getVoiceCall("active");
+		if (!activeVoiceCall)
+		{
+			LSUtils::respondWithError(request, BT_ERR_NO_ACTIVE_VOICE_CALL);
+			return true;
+		}
+
+		auto incomingVoiceCall = voiceCallManager->getVoiceCall("waiting");
+		if (!incomingVoiceCall)
+		{
+			LSUtils::respondWithError(request, BT_ERR_NO_WAITING_VOICE_CALL);
+			return true;
+		}
+
+		if (voiceCallManager->holdAndAnswer())
+		{
+			pbnjson::JValue responseObj = pbnjson::Object();
+			responseObj.put("returnValue", true);
+			responseObj.put("address", remoteAddr);
+
+			LSUtils::postToClient(request, responseObj);
+			return true;
+		}
 		else
-			handleSendAT(remoteAddr, "set", "CHLD", "2");
+		{
+			LSUtils::respondWithError(request, BT_ERR_HOLD_ACTIVE_CALLS_FAILED);
+			return true;
+		}
 	}
+
+	LSUtils::respondWithError(request, BT_ERR_HOLD_ACTIVE_CALLS_FAILED);
 	return true;
 }
 
