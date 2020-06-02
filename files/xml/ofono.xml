@@ -31,6 +31,8 @@
             <arg name="hide_callerid" type="s" direction="in"/>
             <arg name="path" type="o" direction="out"/>
         </method>
+        <method name="HoldAndAnswer">
+        </method>
         <signal name="PropertyChanged">
             <arg name="name" type="s"/>
             <arg name="value" type="v"/>

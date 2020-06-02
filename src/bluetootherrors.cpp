@@ -41,7 +41,10 @@ static std::map<BluetoothErrorCode, std::string> bluetoothErrorTextTable =
 	{BT_ERR_INDEX_PARAM_MISSING, "VoiceCall Index is missing"},
 	{BT_ERR_TERMINATE_CALL_FAILED, "Terminate call failed"},
 	{BT_ERR_NO_VOICE_CALL_FOUND, "No voice call found"},
-	{BT_ERR_ADAPTER_IS_NOT_AVAILABLE, "Adapter is not available"}
+	{BT_ERR_ADAPTER_IS_NOT_AVAILABLE, "Adapter is not available"},
+	{BT_ERR_HOLD_ACTIVE_CALLS_FAILED, "Hold Active Call failed"},
+	{BT_ERR_NO_ACTIVE_VOICE_CALL, "No active voice call"},
+	{BT_ERR_NO_WAITING_VOICE_CALL, "No waiting voice call"}
 };
 
 const std::string retrieveErrorText(BluetoothErrorCode errorCode)

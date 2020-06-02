@@ -59,7 +59,7 @@ std::string HfpOfonoVoiceCallManager::dial(const std::string &phoneNumber)
 	ofono_voice_call_manager_call_dial_sync(mOfonoVoiceCallManagerProxy, phoneNumber.c_str(), "default", &outPath, NULL, &error);
 	if (error)
 	{
-		BT_DEBUG("Not able to make call error  %s", error->message);
+		BT_ERROR("BT_DIAL_ERROR", 0, "Not able to make call error  %s", error->message);
 		g_error_free(error);
 		return std::string("");
 	}
@@ -75,12 +75,27 @@ std::string HfpOfonoVoiceCallManager::dial(const std::string &phoneNumber)
 	return callId;
 }
 
+bool HfpOfonoVoiceCallManager::holdAndAnswer()
+{
+	GError *error = nullptr;
+	ofono_voice_call_manager_call_hold_and_answer_sync(mOfonoVoiceCallManagerProxy, NULL, &error);
+	if (error)
+	{
+		BT_ERROR("BT_HOLD_AND_ANSWER_ERROR", 0, "Not able to hold and answer error  %s", error->message);
+		g_error_free(error);
+		return false;
+	}
+
+	return true;
+}
+
 HfpOfonoVoiceCall* HfpOfonoVoiceCallManager::getVoiceCall(const std::string &state)
 {
 	BT_DEBUG("getVoiceCall with state %s", state.c_str());
 
 	for (auto it = mCallMap.begin(); it != mCallMap.end(); it++)
 	{
+		BT_DEBUG("getVoiceCall %s", it->second->getCallState().c_str());
 		if (it->second->getCallState() == state)
 			return it->second.get();
 	}
