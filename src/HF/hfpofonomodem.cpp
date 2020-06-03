@@ -179,6 +179,7 @@ bool HfpOfonoModem::isModemConnected() const
 
 void HfpOfonoModem::callAdded(HfpOfonoVoiceCall *voiceCall)
 {
+	BT_DEBUG("callAdded ");
 	std::string adapterAddress = getAdapterAddress();
 
 	HfpDeviceInfo *device = mHfpHFRole->getHfDevice()->findDeviceInfo(mAddress, adapterAddress);
@@ -189,6 +190,8 @@ void HfpOfonoModem::callAdded(HfpOfonoVoiceCall *voiceCall)
 	}
 
 	std::string phoneNumber = voiceCall->getLineIdentification();
+
+	BT_DEBUG("callAdded phoneNumber %s", phoneNumber.c_str());
 
 	if (phoneNumber.empty())
 		return;
@@ -204,6 +207,7 @@ void HfpOfonoModem::callAdded(HfpOfonoVoiceCall *voiceCall)
 
 void HfpOfonoModem::callRemoved(HfpOfonoVoiceCall *voiceCall)
 {
+	BT_DEBUG("callRemoved ");
 	HfpDeviceInfo *device = mHfpHFRole->getHfDevice()->findDeviceInfo(mAddress, getAdapterAddress());
 	if (!device)
 	{
@@ -217,10 +221,14 @@ void HfpOfonoModem::callRemoved(HfpOfonoVoiceCall *voiceCall)
 		device->eraseCallStatus(phoneNumber);
 		mHfpHFRole->notifySubscribersStatusChanged(true);
 	}
+
+	BT_DEBUG("callRemoved phoneNumber %s ", phoneNumber.c_str());
 }
 
 void HfpOfonoModem::updateState(HfpOfonoVoiceCall *voiceCall)
 {
+	BT_DEBUG("updateCallState");
+
 	HfpDeviceInfo *device = mHfpHFRole->getHfDevice()->findDeviceInfo(mAddress, getAdapterAddress());
 	if (!device)
 	{
@@ -236,6 +244,7 @@ void HfpOfonoModem::updateState(HfpOfonoVoiceCall *voiceCall)
 
 	if (!phoneNumber.empty() && !callState.empty())
 	{
+		BT_DEBUG("updateCallState for phoneNumber: %s state: %s", phoneNumber.c_str(), callState.c_str());
 		device->setCallStatus(phoneNumber, CLCC::DeviceStatus::STATUS, callState);
 		if (callState == "dialing")
 			device->setCallStatus(phoneNumber, CLCC::DeviceStatus::DIRECTION, "outgoing");

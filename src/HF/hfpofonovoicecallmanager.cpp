@@ -41,6 +41,8 @@ mOfonoVoiceCallManagerProxy(nullptr)
 		return;
 	}
 
+	addExistingVoiceCalls();
+
 	g_signal_connect(G_OBJECT(mOfonoVoiceCallManagerProxy), "call-added", G_CALLBACK(handleCallAdded), this);
 	g_signal_connect(G_OBJECT(mOfonoVoiceCallManagerProxy), "call-removed", G_CALLBACK(handleCallRemoved), this);
 }
@@ -49,6 +51,39 @@ HfpOfonoVoiceCallManager::~HfpOfonoVoiceCallManager()
 {
 	if (mOfonoVoiceCallManagerProxy)
 		g_object_unref(mOfonoVoiceCallManagerProxy);
+}
+
+void HfpOfonoVoiceCallManager::addExistingVoiceCalls()
+{
+	GError *error = 0;
+	GVariant *voiceCalls;
+
+	ofono_voice_call_manager_call_get_calls_sync(mOfonoVoiceCallManagerProxy, &voiceCalls, NULL, &error);
+	if (error)
+	{
+		BT_ERROR("BT_VOICE_CALL_MANAGER_ERROR", 0, "Failed to call: %s", error->message);
+		g_error_free(error);
+		return;
+	}
+
+	g_autoptr(GVariantIter) iter1 = NULL;
+	g_variant_get (voiceCalls, "a(oa{sv})", &iter1);
+
+	const gchar *voiceObjectPath;
+	g_autoptr(GVariantIter) iter2 = NULL;
+
+	while (g_variant_iter_loop (iter1, "(&oa{sv})", &voiceObjectPath, &iter2))
+	{
+		std::unique_ptr<HfpOfonoVoiceCall> call (new HfpOfonoVoiceCall(voiceObjectPath, mModem));
+
+		if (mModem)
+		{
+			mModem->callAdded(call.get());
+			mModem->updateState(call.get());
+
+			mCallMap[voiceObjectPath] = std::move(call);
+		}
+	}
 }
 
 std::string HfpOfonoVoiceCallManager::dial(const std::string &phoneNumber)
@@ -82,6 +117,20 @@ bool HfpOfonoVoiceCallManager::holdAndAnswer()
 	if (error)
 	{
 		BT_ERROR("BT_HOLD_AND_ANSWER_ERROR", 0, "Not able to hold and answer error  %s", error->message);
+		g_error_free(error);
+		return false;
+	}
+
+	return true;
+}
+
+bool HfpOfonoVoiceCallManager::mergeCalls()
+{
+	GError *error = nullptr;
+	ofono_voice_call_manager_call_create_multiparty_sync(mOfonoVoiceCallManagerProxy, NULL, NULL, &error);
+	if (error)
+	{
+		BT_ERROR("BT_CREATE_MUTLTI_PARTY_ERROR", 0, "Not able to mergeCalls error  %s", error->message);
 		g_error_free(error);
 		return false;
 	}

@@ -690,15 +690,74 @@ As for a successful call
  */
 bool HfpHFRole::mergeCall(LSMessage &message)
 {
+	LS::Message request(&message);
 	std::string remoteAddr = "";
-	std::string param = "";
-	const std::string schema = STRICT_SCHEMA(PROPS_1(PROP(address, string))REQUIRED_1(address));
-	LS2ParamList paramList =
-                        {{"address", std::make_pair(HFGeneral::DataType::STRING, BT_ERR_ADDR_PARAM_MISSING)}};
+	const std::string schema = STRICT_SCHEMA(PROPS_2(PROP(address, string), PROP(adapterAddress, string))REQUIRED_1(address));
+	LS2ParamList localParam =
+						{{"address", std::make_pair(HFGeneral::DataType::STRING, BT_ERR_ADDR_PARAM_MISSING)},
+						 {"adapterAddress", std::make_pair(HFGeneral::DataType::STRING, BT_ERR_ADAPTER_ADDR_PARAM_MISSING)}
+						};
+
 	LS2Result localResult;
 
-	if (parseLSMessage(message, HfpHFLS2Data(schema, paramList), remoteAddr, localResult, false))
-		handleSendAT(remoteAddr, "set", "CHLD", "3");
+	if (parseLSMessage(message, HfpHFLS2Data(schema, localParam), remoteAddr, localResult, false, true))
+	{
+		std::string adapterAddress = mHFLS2Call->getParam(localResult, "adapterAddress");
+		if (adapterAddress.empty())
+		{
+			adapterAddress = getDefaultAdapterAddress();
+			if (adapterAddress.empty())
+			{
+				LSUtils::respondWithError(request, BT_ERR_ADAPTER_IS_NOT_AVAILABLE);
+				return true;
+			}
+		}
+
+		auto modem = mHfpOfonoManager->getModem(adapterAddress, remoteAddr);
+		if (!modem)
+		{
+			LSUtils::respondWithError(request, BT_ERR_DEVICE_NOT_CONNECTED);
+			return true;
+		}
+
+		auto voiceCallManager = modem->getVoiceCallManager();
+		if (!voiceCallManager)
+		{
+			LSUtils::respondWithError(request, BT_ERR_DEVICE_NOT_CONNECTED);
+			return true;
+		}
+
+		auto activeVoiceCall = voiceCallManager->getVoiceCall("active");
+		if (!activeVoiceCall)
+		{
+			LSUtils::respondWithError(request, BT_ERR_NO_ACTIVE_VOICE_CALL);
+			return true;
+		}
+
+		auto incomingVoiceCall = voiceCallManager->getVoiceCall("held");
+		if (!incomingVoiceCall)
+		{
+			LSUtils::respondWithError(request, BT_ERR_NO_HELD_VOICE_CALL);
+			return true;
+		}
+
+		if (voiceCallManager->mergeCalls())
+		{
+			pbnjson::JValue responseObj = pbnjson::Object();
+			responseObj.put("returnValue", true);
+			responseObj.put("address", remoteAddr);
+
+			LSUtils::postToClient(request, responseObj);
+			return true;
+		}
+		else
+		{
+			LSUtils::respondWithError(request, BT_ERR_MERGE_VOICE_CALL_FAILED);
+			return true;
+		}
+	}
+
+	LSUtils::respondWithError(request, BT_ERR_MERGE_VOICE_CALL_FAILED);
 	return true;
 }
 
