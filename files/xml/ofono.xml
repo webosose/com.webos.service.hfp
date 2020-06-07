@@ -33,6 +33,12 @@
         </method>
         <method name="HoldAndAnswer">
         </method>
+        <method name="CreateMultiparty">
+            <arg name="calls" type="ao" direction="out"/>
+        </method>
+        <method name="GetCalls">
+            <arg name="calls_with_properties" type="a(oa{sv})" direction="out"/>
+        </method>
         <signal name="PropertyChanged">
             <arg name="name" type="s"/>
             <arg name="value" type="v"/>

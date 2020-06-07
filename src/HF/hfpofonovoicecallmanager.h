@@ -36,10 +36,12 @@ public:
 	HfpOfonoVoiceCallManager(const HfpOfonoVoiceCallManager&) = delete;
 	HfpOfonoVoiceCallManager& operator = (const HfpOfonoVoiceCallManager&) = delete;
 
+	void addExistingVoiceCalls();
 	std::string dial(const std::string &phoneNumber);
 	HfpOfonoVoiceCall* getVoiceCall(const std::string &state);
 	HfpOfonoVoiceCall* getVoiceCall(int index);
 	bool holdAndAnswer();
+	bool mergeCalls();
 
 	static void handleCallAdded(OfonoVoiceCallManager *object, const gchar *path, GVariant *properties, void *userData);
 	static void handleCallRemoved(OfonoVoiceCallManager *object, const gchar *path, void *userData);
