@@ -46,7 +46,8 @@ static std::map<BluetoothErrorCode, std::string> bluetoothErrorTextTable =
 	{BT_ERR_NO_ACTIVE_VOICE_CALL, "No active voice call"},
 	{BT_ERR_NO_WAITING_VOICE_CALL, "No waiting voice call"},
 	{BT_ERR_NO_HELD_VOICE_CALL, "No voice call on hold"},
-	{BT_ERR_MERGE_VOICE_CALL_FAILED, "Merge voice call failed"}
+	{BT_ERR_MERGE_VOICE_CALL_FAILED, "Merge voice call failed"},
+	{BT_ERR_RELEASE_ACTIVE_CALLS_FAILED, "Release Active voice call failed"}
 };
 
 const std::string retrieveErrorText(BluetoothErrorCode errorCode)

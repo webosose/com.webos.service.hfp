@@ -42,6 +42,7 @@ public:
 	HfpOfonoVoiceCall* getVoiceCall(int index);
 	bool holdAndAnswer();
 	bool mergeCalls();
+	bool releaseAndAnswer();
 
 	static void handleCallAdded(OfonoVoiceCallManager *object, const gchar *path, GVariant *properties, void *userData);
 	static void handleCallRemoved(OfonoVoiceCallManager *object, const gchar *path, void *userData);

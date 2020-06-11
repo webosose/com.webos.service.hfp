@@ -138,6 +138,20 @@ bool HfpOfonoVoiceCallManager::mergeCalls()
 	return true;
 }
 
+bool HfpOfonoVoiceCallManager::releaseAndAnswer()
+{
+	GError *error = nullptr;
+	ofono_voice_call_manager_call_release_and_answer_sync(mOfonoVoiceCallManagerProxy, NULL, &error);
+	if (error)
+	{
+		BT_ERROR("BT_RELEASE_AND_ANSWER_ERROR", 0, "Not able to releaseAndAnswer error  %s", error->message);
+		g_error_free(error);
+		return false;
+	}
+
+	return true;
+}
+
 HfpOfonoVoiceCall* HfpOfonoVoiceCallManager::getVoiceCall(const std::string &state)
 {
 	BT_DEBUG("getVoiceCall with state %s", state.c_str());

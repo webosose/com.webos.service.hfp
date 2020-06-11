@@ -39,6 +39,8 @@
         <method name="GetCalls">
             <arg name="calls_with_properties" type="a(oa{sv})" direction="out"/>
         </method>
+        <method name="ReleaseAndAnswer">
+        </method>
         <signal name="PropertyChanged">
             <arg name="name" type="s"/>
             <arg name="value" type="v"/>
