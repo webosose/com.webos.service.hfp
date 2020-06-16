@@ -552,15 +552,69 @@ As for a successful call
  */
 bool HfpHFRole::releaseActiveCalls(LSMessage &message)
 {
+	LS::Message request(&message);
 	std::string remoteAddr = "";
 	std::string param = "";
-	const std::string schema = STRICT_SCHEMA(PROPS_1(PROP(address, string))REQUIRED_1(address));
+	const std::string schema = STRICT_SCHEMA(PROPS_2(PROP(address, string), PROP(adapterAddress, string))REQUIRED_1(address));
 	LS2ParamList paramList =
-                        {{"address", std::make_pair(HFGeneral::DataType::STRING, BT_ERR_ADDR_PARAM_MISSING)}};
+		{{"address", std::make_pair(HFGeneral::DataType::STRING, BT_ERR_ADDR_PARAM_MISSING)},
+		{"adapterAddress", std::make_pair(HFGeneral::DataType::STRING, BT_ERR_ADAPTER_ADDR_PARAM_MISSING)}
+		};
+
 	LS2Result localResult;
 
-	if (parseLSMessage(message, HfpHFLS2Data(schema, paramList), remoteAddr, localResult, false))
-		handleSendAT(remoteAddr, "set", "CHLD", "1");
+	if (parseLSMessage(message, HfpHFLS2Data(schema, paramList), remoteAddr, localResult, false, true))
+	{
+		std::string adapterAddress = mHFLS2Call->getParam(localResult, "adapterAddress");
+		if (adapterAddress.empty())
+		{
+			adapterAddress = getDefaultAdapterAddress();
+			if (adapterAddress.empty())
+			{
+				LSUtils::respondWithError(request, BT_ERR_ADAPTER_IS_NOT_AVAILABLE);
+				return true;
+			}
+		}
+
+		auto modem = mHfpOfonoManager->getModem(adapterAddress, remoteAddr);
+		if (!modem)
+		{
+			LSUtils::respondWithError(request, BT_ERR_DEVICE_NOT_CONNECTED);
+			return true;
+		}
+
+		auto voiceCallManager = modem->getVoiceCallManager();
+		if (!voiceCallManager)
+		{
+			LSUtils::respondWithError(request, BT_ERR_DEVICE_NOT_CONNECTED);
+			return true;
+		}
+
+		auto waitingVoiceCall = voiceCallManager->getVoiceCall("waiting");
+		if (waitingVoiceCall)
+		{
+			if (voiceCallManager->releaseAndAnswer())
+			{
+				pbnjson::JValue responseObj = pbnjson::Object();
+				responseObj.put("returnValue", true);
+				responseObj.put("address", remoteAddr);
+
+				LSUtils::postToClient(request, responseObj);
+				return true;
+			}
+			else
+			{
+				LSUtils::respondWithError(request, BT_ERR_ANSWER_CALL_FAILED);
+				return true;
+			}
+		}
+		else
+		{
+			LSUtils::respondWithError(request, BT_ERR_NO_WAITING_VOICE_CALL);
+		}
+	}
+
+	LSUtils::respondWithError(request, BT_ERR_RELEASE_ACTIVE_CALLS_FAILED);
 	return true;
 }
 
