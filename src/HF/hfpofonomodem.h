@@ -27,6 +27,7 @@ extern "C" {
 class HfpOfonoVoiceCallManager;
 class HfpHFRole;
 class HfpOfonoVoiceCall;
+class HfpOfonoHandsfree;
 
 class HfpOfonoModem
 {
@@ -45,6 +46,11 @@ public:
 	void callRemoved(HfpOfonoVoiceCall *voiceCall);
 	std::string getAdapterAddress();
 
+	void interfaceAdded();
+	void interfaceRemoved();
+	void updateBatteryChargeLevel(unsigned char batteryChargeLevel);
+	void notifyProperties();
+
 	static void handleModemPropertyChanged(OfonoModem *proxy, char *name, GVariant *v, void *userData);
 
 private:
@@ -52,6 +58,7 @@ private:
 	std::string mObjectPath;
 	OfonoModem *mOfonoModemProxy;
 	HfpOfonoVoiceCallManager *mVoiceCallManager;
+	HfpOfonoHandsfree* mHandsfree;
 	bool mEmergency;
 	bool mLockDown;
 	bool mOnline;

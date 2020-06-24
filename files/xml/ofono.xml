@@ -70,4 +70,13 @@
             <arg name="reason" type="s"/>
         </signal>
      </interface>
+     <interface name="org.ofono.Handsfree">
+        <method name="GetProperties">
+            <arg name="properties" type="a{sv}" direction="out"/>'
+        </method>
+        <signal name="PropertyChanged">
+            <arg name="name" type="s"/>
+            <arg name="value" type="v"/>
+        </signal>
+     </interface>
 </node>

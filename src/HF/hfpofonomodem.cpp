@@ -25,6 +25,7 @@
 #include <string>
 #include <algorithm>
 #include "hfpofonovoicecallmanager.h"
+#include "hfpofonohandsfree.h"
 
 extern "C" {
 #include "ofono-interface.h"
@@ -35,6 +36,7 @@ mHfpHFRole(role),
 mObjectPath(objectPath),
 mOfonoModemProxy(nullptr),
 mVoiceCallManager(nullptr),
+mHandsfree(nullptr),
 mEmergency(false),
 mLockDown(false),
 mOnline(false),
@@ -63,6 +65,9 @@ HfpOfonoModem::~HfpOfonoModem()
 {
 	if(mVoiceCallManager)
 		delete mVoiceCallManager;
+
+	if(mHandsfree)
+		delete mHandsfree;
 
 	if (mOfonoModemProxy)
 		g_object_unref(mOfonoModemProxy);
@@ -93,10 +98,12 @@ void HfpOfonoModem::handleModemPropertyChanged(OfonoModem *proxy, char *name, GV
 		{
 			pThis->mInterfaces.push_back(interface);
 		}
+
 		if (!pThis->isModemConnected())
-		{
-			pThis->mAddress = "";
-		}
+			pThis->interfaceRemoved();
+		else
+			pThis->interfaceAdded();
+
 	}
 
 	if (key == "Serial")
@@ -146,9 +153,9 @@ void HfpOfonoModem::getModemProperties(OfonoModem *modemProxy)
 			}
 
 			if (!isModemConnected())
-			{
-				mAddress = "";
-			}
+				interfaceRemoved();
+			else
+				interfaceAdded();
 		}
 
 		if (key == "Serial")
@@ -289,4 +296,44 @@ std::string HfpOfonoModem::getAdapterAddress()
 
 	 //On failure return empty string
 	 return std::string();
+}
+
+void HfpOfonoModem::interfaceAdded()
+{
+	if (!mHandsfree)
+		mHandsfree = new HfpOfonoHandsfree(mObjectPath, this);
+}
+
+void HfpOfonoModem::interfaceRemoved()
+{
+	mAddress = "";
+
+	if (mHandsfree)
+	{
+		delete mHandsfree;
+		mHandsfree = nullptr;
+	}
+}
+
+void HfpOfonoModem::updateBatteryChargeLevel(unsigned char batteryChargeLevel)
+{
+	BT_DEBUG("batteryChargeLevel");
+
+	HfpDeviceInfo *device = mHfpHFRole->getHfDevice()->findDeviceInfo(mAddress, getAdapterAddress());
+	if (!device)
+	{
+		BT_ERROR("DEVICE NOT FOUND", 0, "%s", "Setting BatteryChargeLevel failed");
+		return;
+	}
+
+	BT_DEBUG("setDeviceStatus for BatteryChargeLevel: %d ", batteryChargeLevel);
+	device->setDeviceStatus(CIND::DeviceStatus::BATTCHG, batteryChargeLevel);
+
+	mHfpHFRole->notifySubscribersStatusChanged(true);
+}
+
+void HfpOfonoModem::notifyProperties()
+{
+	if (mHandsfree)
+		updateBatteryChargeLevel(mHandsfree->getBatteryChargeLevel());
 }
