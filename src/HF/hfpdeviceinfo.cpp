@@ -39,13 +39,14 @@ HfpDeviceInfo::~HfpDeviceInfo()
 
 bool HfpDeviceInfo::setDeviceStatus(int index, int value)
 {
-	int type = mCINDIndex[index];
-	mDeviceStatus[type] = value;
+	//int type = mCINDIndex[index];
+	mDeviceStatus[index] = value;
 
+/*
 	if ((type == CIND::DeviceStatus::CALL && value == CIND::Call::INACTIVE) || type == CIND::DeviceStatus::CALLSETUP ||
                 type == CIND::DeviceStatus::CALLHELD)
 		return true;
-
+*/
 	return false;
 }
 

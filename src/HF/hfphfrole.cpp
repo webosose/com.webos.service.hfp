@@ -1278,7 +1278,18 @@ void HfpHFRole::handleGetStatus(LSMessage* reply, const std::string &adapterAddr
 				continue;
 
 			bFound = true;
-			mHFDevice->createDeviceInfo(address,adapterAddr);
+			if (mHFDevice->createDeviceInfo(address,adapterAddr))
+			{
+				//A new device is created, so fetch its properties
+				if (mHfpOfonoManager) {
+					auto modem = mHfpOfonoManager->getModem(adapterAddr, address);
+					if (modem)
+					{
+						BT_DEBUG("modem found for device:%s  for adapter %s", address.c_str(),adapterAddr.c_str());
+						modem->notifyProperties();
+					}
+				}
+			}
 
 			BT_DEBUG("Add device:%s  for adapter %s", address.c_str(),adapterAddr.c_str());
 			subscribeGetSCOStatus(address,adapterAddr, true);
@@ -1435,7 +1446,7 @@ void HfpHFRole::buildGetStatusResp(const std::string &remoteAddr, const HfpDevic
 		resObj.put("address", addr);
 		resObj.put("adapterAddress", adapterAddr);
 		resObj.put("signal", device.getDeviceStatus(CIND::DeviceStatus::SIGNAL));
-		resObj.put("battey", device.getDeviceStatus(CIND::DeviceStatus::BATTCHG));
+		resObj.put("battery", device.getDeviceStatus(CIND::DeviceStatus::BATTCHG));
 		bool scoStatus = false;
 		if (device.getAudioStatus(SCO::DeviceStatus::CONNECTED) ==  HFGeneral::Status::STATUSTRUE)
 			scoStatus = true;
