@@ -41,7 +41,7 @@ HfpOfonoHandsfree::HfpOfonoHandsfree(const std::string &objectPath, HfpOfonoMode
 		return;
 	}
 
-	getHandsfreeProperties(mOfonoHandsfreeProxy);
+	getHandsfreeProperties();
 
 	g_signal_connect(G_OBJECT(mOfonoHandsfreeProxy), "property-changed", G_CALLBACK(handleHandsfreePropertyChanged), this);
 }
@@ -52,14 +52,14 @@ HfpOfonoHandsfree::~HfpOfonoHandsfree()
 		g_object_unref(mOfonoHandsfreeProxy);
 }
 
-void HfpOfonoHandsfree::getHandsfreeProperties(OfonoHandsfree *handsfreeProxy)
+void HfpOfonoHandsfree::getHandsfreeProperties()
 {
 	GError *error = 0;
 	GVariant *out;
 
-	const char *objectPath = g_dbus_proxy_get_object_path(G_DBUS_PROXY(handsfreeProxy));
+	const char *objectPath = g_dbus_proxy_get_object_path(G_DBUS_PROXY(mOfonoHandsfreeProxy));
 
-	ofono_handsfree_call_get_properties_sync(handsfreeProxy, &out, NULL, &error);
+	ofono_handsfree_call_get_properties_sync(mOfonoHandsfreeProxy, &out, NULL, &error);
 	if (error)
 	{
 		BT_ERROR("MSGID_OBJECT_MANAGER_CREATION_FAILED", 0, "Failed to call: %s", error->message);
@@ -103,7 +103,7 @@ void HfpOfonoHandsfree::handleHandsfreePropertyChanged(OfonoModem *proxy, char *
 	}
 }
 
-void HfpOfonoHandsfree::BatteryChargeLevelChanged(unsigned char batteryChargeLevel)
+void HfpOfonoHandsfree::BatteryChargeLevelChanged(int batteryChargeLevel)
 {
 	BT_DEBUG("BatteryChargeLevel changed to device %d", batteryChargeLevel);
 	mBatteryChargeLevel = batteryChargeLevel;
