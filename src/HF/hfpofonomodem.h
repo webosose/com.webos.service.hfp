@@ -28,6 +28,7 @@ class HfpOfonoVoiceCallManager;
 class HfpHFRole;
 class HfpOfonoVoiceCall;
 class HfpOfonoHandsfree;
+class HfpOfonoNetworkRegistration;
 
 class HfpOfonoModem
 {
@@ -38,7 +39,6 @@ public:
 	HfpOfonoModem(const HfpOfonoModem&) = delete;
 	HfpOfonoModem& operator = (const HfpOfonoModem&) = delete;
 	void getModemProperties(OfonoModem *modemProxy);
-	bool isModemConnected() const;
 	HfpOfonoVoiceCallManager* getVoiceCallManager() const { return mVoiceCallManager; }
 	std::string getAddress() const { return mAddress; }
 	void updateState(HfpOfonoVoiceCall *call);
@@ -46,9 +46,10 @@ public:
 	void callRemoved(HfpOfonoVoiceCall *voiceCall);
 	std::string getAdapterAddress();
 
-	void interfaceAdded();
-	void interfaceRemoved();
-	void updateBatteryChargeLevel(unsigned char batteryChargeLevel);
+	bool isInterfacePresent(const std::string interfaceName);
+	void interfacesChanged();
+	void updateBatteryChargeLevel(int batteryChargeLevel);
+	void updateNetworkSignalStrength(int networkSignalStrength);
 	void notifyProperties();
 
 	static void handleModemPropertyChanged(OfonoModem *proxy, char *name, GVariant *v, void *userData);
@@ -59,6 +60,7 @@ private:
 	OfonoModem *mOfonoModemProxy;
 	HfpOfonoVoiceCallManager *mVoiceCallManager;
 	HfpOfonoHandsfree* mHandsfree;
+	HfpOfonoNetworkRegistration* mNetworkRegistration;
 	bool mEmergency;
 	bool mLockDown;
 	bool mOnline;

@@ -33,8 +33,8 @@ public:
 	HfpOfonoHandsfree(const HfpOfonoHandsfree&) = delete;
 	HfpOfonoHandsfree& operator = (const HfpOfonoHandsfree&) = delete;
 
-	void getHandsfreeProperties(OfonoHandsfree *handsfreeProxy);
-	unsigned char getBatteryChargeLevel() const { return mBatteryChargeLevel; }
+	void getHandsfreeProperties();
+	int getBatteryChargeLevel() const { return mBatteryChargeLevel; }
 
 	static void handleHandsfreePropertyChanged(OfonoModem *proxy, char *name, GVariant *v, void *userData);
 
@@ -43,8 +43,8 @@ private:
 	std::string mObjectPath;
 	OfonoHandsfree* mOfonoHandsfreeProxy;
 
-	unsigned char mBatteryChargeLevel;
-	void BatteryChargeLevelChanged(unsigned char batteryChargeLevel);
+	int mBatteryChargeLevel;
+	void BatteryChargeLevelChanged(int batteryChargeLevel);
 };
 
 #endif

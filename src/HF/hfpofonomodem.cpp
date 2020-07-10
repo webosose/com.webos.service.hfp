@@ -26,10 +26,16 @@
 #include <algorithm>
 #include "hfpofonovoicecallmanager.h"
 #include "hfpofonohandsfree.h"
+#include "hfpofononetworkregistration.h"
 
 extern "C" {
 #include "ofono-interface.h"
 }
+
+const char interfaceVoiceCallManager[] = "org.ofono.VoiceCallManager";
+const char interfaceCallVolume[] = "org.ofono.CallVolume";
+const char interfaceHandsfree[] = "org.ofono.Handsfree";
+const char interfaceNetworkRegistration[] = "org.ofono.NetworkRegistration";
 
 HfpOfonoModem::HfpOfonoModem(const std::string& objectPath, HfpHFRole *role) :
 mHfpHFRole(role),
@@ -37,6 +43,7 @@ mObjectPath(objectPath),
 mOfonoModemProxy(nullptr),
 mVoiceCallManager(nullptr),
 mHandsfree(nullptr),
+mNetworkRegistration(nullptr),
 mEmergency(false),
 mLockDown(false),
 mOnline(false),
@@ -58,16 +65,22 @@ mAddress("")
 
 	getModemProperties(mOfonoModemProxy);
 
+	mHandsfree = new HfpOfonoHandsfree(mObjectPath, this);
+	mNetworkRegistration = new HfpOfonoNetworkRegistration(mObjectPath, this);
+
 	g_signal_connect(G_OBJECT(mOfonoModemProxy), "property-changed", G_CALLBACK(handleModemPropertyChanged), this);
 }
 
 HfpOfonoModem::~HfpOfonoModem()
 {
-	if(mVoiceCallManager)
+	if (mVoiceCallManager)
 		delete mVoiceCallManager;
 
-	if(mHandsfree)
+	if (mHandsfree)
 		delete mHandsfree;
+
+	if (mNetworkRegistration)
+		delete mNetworkRegistration;
 
 	if (mOfonoModemProxy)
 		g_object_unref(mOfonoModemProxy);
@@ -99,10 +112,7 @@ void HfpOfonoModem::handleModemPropertyChanged(OfonoModem *proxy, char *name, GV
 			pThis->mInterfaces.push_back(interface);
 		}
 
-		if (!pThis->isModemConnected())
-			pThis->interfaceRemoved();
-		else
-			pThis->interfaceAdded();
+		pThis->interfacesChanged();
 
 	}
 
@@ -152,10 +162,7 @@ void HfpOfonoModem::getModemProperties(OfonoModem *modemProxy)
 				mInterfaces.push_back(interface);
 			}
 
-			if (!isModemConnected())
-				interfaceRemoved();
-			else
-				interfaceAdded();
+			interfacesChanged();
 		}
 
 		if (key == "Serial")
@@ -168,20 +175,6 @@ void HfpOfonoModem::getModemProperties(OfonoModem *modemProxy)
 			}
 		}
 	}
-}
-
-bool HfpOfonoModem::isModemConnected() const
-{
-	if (mInterfaces.empty())
-		return false;
-
-	for (auto it = mInterfaces.begin(); it != mInterfaces.end(); it++)
-	{
-		if (*it == "org.ofono.Handsfree")
-			return true;
-	}
-
-	return false;
 }
 
 void HfpOfonoModem::callAdded(HfpOfonoVoiceCall *voiceCall)
@@ -257,9 +250,9 @@ void HfpOfonoModem::updateState(HfpOfonoVoiceCall *voiceCall)
 			device->setCallStatus(phoneNumber, CLCC::DeviceStatus::DIRECTION, "outgoing");
 		else if (callState == "incoming")
 			device->setCallStatus(phoneNumber, CLCC::DeviceStatus::DIRECTION, "incoming");
-	}
 
-	mHfpHFRole->notifySubscribersStatusChanged(true);
+		mHfpHFRole->notifySubscribersStatusChanged(true);
+	}
 }
 
 std::string HfpOfonoModem::getAdapterAddress()
@@ -298,24 +291,53 @@ std::string HfpOfonoModem::getAdapterAddress()
 	 return std::string();
 }
 
-void HfpOfonoModem::interfaceAdded()
+bool HfpOfonoModem::isInterfacePresent(const std::string interfaceName)
 {
-	if (!mHandsfree)
-		mHandsfree = new HfpOfonoHandsfree(mObjectPath, this);
+	if (mInterfaces.empty())
+		return false;
+
+	for (auto it = mInterfaces.begin(); it != mInterfaces.end(); it++)
+	{
+		if (*it == interfaceName)
+			return true;
+	}
+
+	return false;
 }
 
-void HfpOfonoModem::interfaceRemoved()
+void HfpOfonoModem::interfacesChanged()
 {
-	mAddress = "";
-
-	if (mHandsfree)
+	//Get org.ofono.VoiceCallManager properties
+	if (isInterfacePresent(interfaceVoiceCallManager) && mVoiceCallManager)
 	{
-		delete mHandsfree;
-		mHandsfree = nullptr;
+		mVoiceCallManager->addExistingVoiceCalls();
+	}
+
+	//Get org.ofono.CallVolume properties
+	if (isInterfacePresent(interfaceCallVolume))
+	{
+		//ToDo: Volume functionality will be added
+	}
+
+	//Get org.ofono.Handsfree properties
+	if (isInterfacePresent(interfaceHandsfree))
+	{
+		if (mHandsfree)
+			mHandsfree->getHandsfreeProperties();
+	}
+	else
+	{
+		mAddress = "";
+	}
+
+	//Get org.ofono.NetworkRegistration properties
+	if (isInterfacePresent(interfaceNetworkRegistration) && mNetworkRegistration)
+	{
+		mNetworkRegistration->getNetworkRegistrationProperties();
 	}
 }
 
-void HfpOfonoModem::updateBatteryChargeLevel(unsigned char batteryChargeLevel)
+void HfpOfonoModem::updateBatteryChargeLevel(int batteryChargeLevel)
 {
 	BT_DEBUG("batteryChargeLevel");
 
@@ -326,14 +348,41 @@ void HfpOfonoModem::updateBatteryChargeLevel(unsigned char batteryChargeLevel)
 		return;
 	}
 
+	if (device->getDeviceStatus(CIND::DeviceStatus::BATTCHG) == batteryChargeLevel)
+		return;
+
 	BT_DEBUG("setDeviceStatus for BatteryChargeLevel: %d ", batteryChargeLevel);
 	device->setDeviceStatus(CIND::DeviceStatus::BATTCHG, batteryChargeLevel);
 
 	mHfpHFRole->notifySubscribersStatusChanged(true);
 }
 
+void HfpOfonoModem::updateNetworkSignalStrength(int networkSignalStrength)
+{
+	BT_DEBUG("networkSignalStrength");
+
+	HfpDeviceInfo *device = mHfpHFRole->getHfDevice()->findDeviceInfo(mAddress, getAdapterAddress());
+	if (!device)
+	{
+		BT_ERROR("DEVICE NOT FOUND", 0, "%s", "Setting networkSignalStrength failed");
+		return;
+	}
+
+	if (device->getDeviceStatus(CIND::DeviceStatus::SIGNAL) == networkSignalStrength)
+		return;
+
+	BT_DEBUG("setDeviceStatus for networkSignalStrength: %d ", networkSignalStrength);
+	device->setDeviceStatus(CIND::DeviceStatus::SIGNAL, networkSignalStrength);
+
+	mHfpHFRole->notifySubscribersStatusChanged(true);
+}
+
+
 void HfpOfonoModem::notifyProperties()
 {
 	if (mHandsfree)
 		updateBatteryChargeLevel(mHandsfree->getBatteryChargeLevel());
+
+	if (mNetworkRegistration)
+		updateNetworkSignalStrength(mNetworkRegistration->getNetworkSignalStrength());
 }
