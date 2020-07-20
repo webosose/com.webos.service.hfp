@@ -1180,7 +1180,7 @@ void HfpHFRole::handleAdapterGetStatus(LSMessage* reply)
 			for(int i = 0; i < adaptersObjArray.arraySize();i++)
 			{
 				auto adapterObj = adaptersObjArray[i];
-				if (!adapterObj.hasKey("adapterAddress") || !adapterObj.hasKey("name"))
+				if (!adapterObj.hasKey("adapterAddress") || !adapterObj.hasKey("interfaceName"))
 					continue;
 
 				auto adapterAaddress = adapterObj["adapterAddress"].asString();
@@ -1209,16 +1209,16 @@ void HfpHFRole::handleAdapterGetStatus(LSMessage* reply)
 		{
 			BT_DEBUG("New Adapter");
 			auto adapterObj = adaptersObjArray[i];
-			if (!adapterObj.hasKey("adapterAddress") || !adapterObj.hasKey("name"))
+			if (!adapterObj.hasKey("adapterAddress") || !adapterObj.hasKey("interfaceName"))
 				continue;
 
 			auto powered = adapterObj["powered"].asBool();
 
-			if(adapterObj["adapterAddress"].asString().empty() || adapterObj["name"].asString().empty() || !powered)
+			if(adapterObj["adapterAddress"].asString().empty() || adapterObj["interfaceName"].asString().empty() || !powered)
 				continue;
 
 			auto adapterAaddress = adapterObj["adapterAddress"].asString();
-			auto adapterName = adapterObj["name"].asString();
+			auto adapterName = adapterObj["interfaceName"].asString();
 			auto itr = mAdapterMap.find(adapterAaddress.c_str());
 			if(itr == mAdapterMap.end() && !adapterName.empty() && !adapterAaddress.empty())
 			{
