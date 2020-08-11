@@ -331,7 +331,20 @@ bool HfpHFRole::answerCall(LSMessage &message)
 
 	if (parseLSMessage(message, HfpHFLS2Data(schema, localParam), remoteAddr, localResult, false, true))
 	{
+#ifdef MULTI_SESSION_SUPPORT
+		std::string adapterAddress;
+		auto displayIndex = LSUtils::getDisplaySetIdIndex(message, this->getService());
+		if (displayIndex == LSUtils::DisplaySetId::HOST)
+		{
+			adapterAddress = mHFLS2Call->getParam(localResult, "adapterAddress");
+		}
+		else
+		{
+			adapterAddress = getAdapterAddress(displayIndex);
+		}
+#else
 		std::string adapterAddress = mHFLS2Call->getParam(localResult, "adapterAddress");
+#endif
 		if (adapterAddress.empty())
 		{
 			adapterAddress = getDefaultAdapterAddress();
@@ -429,7 +442,20 @@ bool HfpHFRole::terminateCall(LSMessage &message)
 			return true;
 		}
 
+#ifdef MULTI_SESSION_SUPPORT
+		std::string adapterAddress;
+		auto displayIndex = LSUtils::getDisplaySetIdIndex(message, this->getService());
+		if (displayIndex == LSUtils::DisplaySetId::HOST)
+		{
+			adapterAddress = mHFLS2Call->getParam(localResult, "adapterAddress");
+		}
+		else
+		{
+			adapterAddress = getAdapterAddress(displayIndex);
+		}
+#else
 		std::string adapterAddress = mHFLS2Call->getParam(localResult, "adapterAddress");
+#endif
 		if (adapterAddress.empty())
 		{
 			adapterAddress = getDefaultAdapterAddress();
@@ -526,7 +552,20 @@ bool HfpHFRole::releaseHeldCalls(LSMessage &message)
 	LS2Result localResult;
 	if (parseLSMessage(message, HfpHFLS2Data(schema, paramList), remoteAddr, localResult, false, true))
 	{
+#ifdef MULTI_SESSION_SUPPORT
+		std::string adapterAddress;
+		auto displayIndex = LSUtils::getDisplaySetIdIndex(message, this->getService());
+		if (displayIndex == LSUtils::DisplaySetId::HOST)
+		{
+			adapterAddress = mHFLS2Call->getParam(localResult, "adapterAddress");
+		}
+		else
+		{
+			adapterAddress = getAdapterAddress(displayIndex);
+		}
+#else
 		std::string adapterAddress = mHFLS2Call->getParam(localResult, "adapterAddress");
+#endif
 		if (adapterAddress.empty())
 		{
 			adapterAddress = getDefaultAdapterAddress();
@@ -623,7 +662,20 @@ bool HfpHFRole::releaseActiveCalls(LSMessage &message)
 
 	if (parseLSMessage(message, HfpHFLS2Data(schema, paramList), remoteAddr, localResult, false, true))
 	{
+#ifdef MULTI_SESSION_SUPPORT
+		std::string adapterAddress;
+		auto displayIndex = LSUtils::getDisplaySetIdIndex(message, this->getService());
+		if (displayIndex == LSUtils::DisplaySetId::HOST)
+		{
+			adapterAddress = mHFLS2Call->getParam(localResult, "adapterAddress");
+		}
+		else
+		{
+			adapterAddress = getAdapterAddress(displayIndex);
+		}
+#else
 		std::string adapterAddress = mHFLS2Call->getParam(localResult, "adapterAddress");
+#endif
 		if (adapterAddress.empty())
 		{
 			adapterAddress = getDefaultAdapterAddress();
@@ -716,7 +768,20 @@ bool HfpHFRole::holdActiveCalls(LSMessage &message)
 
 	if (parseLSMessage(message, HfpHFLS2Data(schema, localParam), remoteAddr, localResult, false, true))
 	{
+#ifdef MULTI_SESSION_SUPPORT
+		std::string adapterAddress;
+		auto displayIndex = LSUtils::getDisplaySetIdIndex(message, this->getService());
+		if (displayIndex == LSUtils::DisplaySetId::HOST)
+		{
+			adapterAddress = mHFLS2Call->getParam(localResult, "adapterAddress");
+		}
+		else
+		{
+			adapterAddress = getAdapterAddress(displayIndex);
+		}
+#else
 		std::string adapterAddress = mHFLS2Call->getParam(localResult, "adapterAddress");
+#endif
 		if (adapterAddress.empty())
 		{
 			adapterAddress = getDefaultAdapterAddress();
@@ -814,7 +879,21 @@ bool HfpHFRole::mergeCall(LSMessage &message)
 
 	if (parseLSMessage(message, HfpHFLS2Data(schema, localParam), remoteAddr, localResult, false, true))
 	{
+
+#ifdef MULTI_SESSION_SUPPORT
+		std::string adapterAddress;
+		auto displayIndex = LSUtils::getDisplaySetIdIndex(message, this->getService());
+		if (displayIndex == LSUtils::DisplaySetId::HOST)
+		{
+			adapterAddress = mHFLS2Call->getParam(localResult, "adapterAddress");
+		}
+		else
+		{
+			adapterAddress = getAdapterAddress(displayIndex);
+		}
+#else
 		std::string adapterAddress = mHFLS2Call->getParam(localResult, "adapterAddress");
+#endif
 		if (adapterAddress.empty())
 		{
 			adapterAddress = getDefaultAdapterAddress();
@@ -963,11 +1042,24 @@ bool HfpHFRole::call(LSMessage &message)
 	{
 		std::string number = mHFLS2Call->getParam(localResult, "number");
 		std::string memoryDialing = mHFLS2Call->getParam(localResult, "memoryDialing");
-		std::string adapterAddress = mHFLS2Call->getParam(localResult, "adapterAddress");
 
 		if(!number.empty())
 		{
+#ifdef MULTI_SESSION_SUPPORT
+			std::string adapterAddress;
+			auto index = LSUtils::getDisplaySetIdIndex(message, this->getService());
+			if (index == LSUtils::DisplaySetId::HOST)
+			{
+				adapterAddress = mHFLS2Call->getParam(localResult, "adapterAddress");
+			}
+			else
+			{
+				adapterAddress = getAdapterAddress(index);
+			}
+#else
 			std::string adapterAddress = mHFLS2Call->getParam(localResult, "adapterAddress");
+#endif
+
 			if (adapterAddress.empty())
 			{
 				adapterAddress = getDefaultAdapterAddress();
@@ -1105,7 +1197,20 @@ bool HfpHFRole::parseLSMessage(LSMessage &message, const HfpHFLS2Data &ls2Data, 
 		remoteAddr = mHFLS2Call->getParam(result, "address");
 		if (isMultiAdapterSupport)
 		{
+#ifdef MULTI_SESSION_SUPPORT
+			std::string adapterAddress;
+			auto index = LSUtils::getDisplaySetIdIndex(message, this->getService());
+			if (index == LSUtils::DisplaySetId::HOST)
+			{
+				adapterAddress = mHFLS2Call->getParam(result, "adapterAddress");
+			}
+			else
+			{
+				adapterAddress = getAdapterAddress(index);
+			}
+#else
 			std::string adapterAddress = mHFLS2Call->getParam(result, "adapterAddress");
+#endif
 			if (adapterAddress.empty())
 				adapterAddress = getDefaultAdapterAddress();
 			return handleOneReplyFunc(request, remoteAddr, adapterAddress);
@@ -1218,7 +1323,11 @@ void HfpHFRole::handleAdapterGetStatus(LSMessage* reply)
 				continue;
 
 			auto adapterAaddress = adapterObj["adapterAddress"].asString();
+#ifdef MULTI_SESSION_SUPPORT
 			auto adapterName = adapterObj["interfaceName"].asString();
+#else
+			auto adapterName = adapterObj["name"].asString();
+#endif
 			auto itr = mAdapterMap.find(adapterAaddress.c_str());
 			if(itr == mAdapterMap.end() && !adapterName.empty() && !adapterAaddress.empty())
 			{
@@ -1533,3 +1642,28 @@ std::string HfpHFRole::getDefaultAdapterAddress() const
 	 //On failure return empty string
 	 return std::string();
 }
+
+#ifdef MULTI_SESSION_SUPPORT
+std::string HfpHFRole::getAdapterAddress(LSUtils::DisplaySetId idx) const
+{
+	std::string adapterAddress;
+	std::string hciName = "hci" + std::to_string(idx);
+
+	std::size_t found = hciName.find("hci");
+
+	if (found == std::string::npos)
+	{
+		return adapterAddress;
+	}
+
+	for (auto it = mAdapterMap.begin(); it != mAdapterMap.end(); it++)
+	{
+		auto name = it->second;
+		std::string hci = name.substr(found, name.length());
+		if (hci == hciName)
+			return it->first;
+	}
+
+	return adapterAddress;
+}
+#endif

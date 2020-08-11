@@ -24,6 +24,7 @@
 #include "hfphfls2call.h"
 #include "hfphfdevicestatus.h"
 #include "dbusutils.h"
+#include "ls2utils.h"
 
 class HfpDeviceInfo;
 class HfpHFDeviceStatus;
@@ -91,6 +92,9 @@ private:
 	void createOfonoManager();
 	void destroyOfonoManager();
 	std::string getDefaultAdapterAddress() const;
+#ifdef MULTI_SESSION_SUPPORT
+	std::string getAdapterAddress(LSUtils::DisplaySetId idx) const;
+#endif
 
 private:
 	LS::SubscriptionPoint* mGetStatusSubscription;
