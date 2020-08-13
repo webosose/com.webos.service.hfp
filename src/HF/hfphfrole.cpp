@@ -976,26 +976,66 @@ As for a successful call
  */
 bool HfpHFRole::setVolume(LSMessage &message)
 {
+	LS::Message request(&message);
 	std::string remoteAddr = "";
-	const std::string schema = STRICT_SCHEMA(PROPS_2(PROP(address, string),PROP(volume, integer))REQUIRED_2(address, volume));
+	const std::string schema = STRICT_SCHEMA(PROPS_3(PROP(address, string),PROP(volume, integer), PROP(adapterAddress, string))REQUIRED_2(address, volume));
 	LS2ParamList paramList =
                         {{"address", std::make_pair(HFGeneral::DataType::STRING, BT_ERR_ADDR_PARAM_MISSING)},
-                        {"volume", std::make_pair(HFGeneral::DataType::INTEGER, BT_ERR_VOLUME_PARAM_MISSING)}};
+                        {"volume", std::make_pair(HFGeneral::DataType::INTEGER, BT_ERR_VOLUME_PARAM_MISSING)},
+                        {"adapterAddress", std::make_pair(HFGeneral::DataType::STRING, BT_ERR_ADAPTER_ADDR_PARAM_MISSING)}
+						};
 	LS2Result localResult;
 
-	if (parseLSMessage(message, HfpHFLS2Data(schema, paramList), remoteAddr, localResult, false))
+	if (parseLSMessage(message, HfpHFLS2Data(schema, paramList), remoteAddr, localResult, false, true))
 	{
 		std::string volume = mHFLS2Call->getParam(localResult, "volume");
+#ifdef MULTI_SESSION_SUPPORT
+		std::string adapterAddress;
+		auto displayIndex = LSUtils::getDisplaySetIdIndex(message, this->getService());
+		if (displayIndex == LSUtils::DisplaySetId::HOST)
+		{
+			adapterAddress = mHFLS2Call->getParam(localResult, "adapterAddress");
+		}
+		else
+		{
+			adapterAddress = getAdapterAddress(displayIndex);
+		}
+#else
+		std::string adapterAddress = mHFLS2Call->getParam(localResult, "adapterAddress");
+#endif
+		if (adapterAddress.empty())
+		{
+			adapterAddress = getDefaultAdapterAddress();
+		}
+
 		int iVolume = std::stoi(volume);
 		if (iVolume < 0 || iVolume > 15)
 		{
-			LS::Message request(&message);
 			LSUtils::respondWithError(request, BT_ERR_VOLUME_PARAM_ERROR);
 			mResponseMessage.erase(remoteAddr);
 			return true;
 		}
-		handleSendAT(remoteAddr, "set", "VGS", volume);
-		mHFDevice->updateAudioVolume(remoteAddr, iVolume, false);
+
+		int vol = ((float) iVolume / 15.0) * 100;
+
+		auto modem = mHfpOfonoManager->getModem(adapterAddress, remoteAddr);
+		if (!modem)
+		{
+			LSUtils::respondWithError(request, BT_ERR_DEVICE_NOT_CONNECTED);
+			return true;
+		}
+		//VGS means speaker volume so setting speaker volume
+		if (modem->setSpeakerVolume(vol))
+		{
+			pbnjson::JValue responseObj = pbnjson::Object();
+			responseObj.put("returnValue", true);
+			responseObj.put("address", remoteAddr);
+
+			LSUtils::postToClient(request, responseObj);
+			//mHFDevice->updateAudioVolume(remoteAddr, adapterAddress, iVolume, false);
+			return true;
+
+		}
 	}
 	return true;
 }
@@ -1319,14 +1359,14 @@ void HfpHFRole::handleAdapterGetStatus(LSMessage* reply)
 
 			auto powered = adapterObj["powered"].asBool();
 
-			if(adapterObj["adapterAddress"].asString().empty() || adapterObj["interfaceName"].asString().empty() || !powered)
+			if(adapterObj["adapterAddress"].asString().empty() || adapterObj["interfaceName"].asString().empty() || adapterObj["name"].asString().empty() || !powered)
 				continue;
 
 			auto adapterAaddress = adapterObj["adapterAddress"].asString();
 #ifdef MULTI_SESSION_SUPPORT
-			auto adapterName = adapterObj["interfaceName"].asString();
-#else
 			auto adapterName = adapterObj["name"].asString();
+#else
+			auto adapterName = adapterObj["interfaceName"].asString();
 #endif
 			auto itr = mAdapterMap.find(adapterAaddress.c_str());
 			if(itr == mAdapterMap.end() && !adapterName.empty() && !adapterAaddress.empty())
@@ -1649,16 +1689,16 @@ std::string HfpHFRole::getAdapterAddress(LSUtils::DisplaySetId idx) const
 	std::string adapterAddress;
 	std::string hciName = "hci" + std::to_string(idx);
 
-	std::size_t found = hciName.find("hci");
-
-	if (found == std::string::npos)
-	{
-		return adapterAddress;
-	}
-
 	for (auto it = mAdapterMap.begin(); it != mAdapterMap.end(); it++)
 	{
 		auto name = it->second;
+		std::size_t found = name.find("hci");
+
+		if (found == std::string::npos)
+		{
+			return adapterAddress;
+		}
+
 		std::string hci = name.substr(found, name.length());
 		if (hci == hciName)
 			return it->first;

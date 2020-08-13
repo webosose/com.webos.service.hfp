@@ -184,6 +184,19 @@ void HfpHFDeviceStatus::updateRingStatus(const std::string &remoteAddr, bool rec
 	localDevice->setRING(receive);
 }
 
+void HfpHFDeviceStatus::updateAudioVolume(const std::string &remoteAddr, const std::string &adapterAddress, int volume, bool isUpdated)
+{
+	HfpDeviceInfo* localDevice = findDeviceInfo(remoteAddr, adapterAddress);
+	if (localDevice == nullptr)
+	{
+		BT_DEBUG("Can't find the deviceinfo : %s", remoteAddr.c_str());
+		return;
+	}
+	localDevice->setAudioStatus(SCO::DeviceStatus::VOLUME, volume);
+	if (isUpdated)
+		mReceivedATCmd.push(receiveATCMD::ATCMD::VGS);
+}
+
 void HfpHFDeviceStatus::updateAudioVolume(const std::string &remoteAddr, int volume, bool isUpdated)
 {
 	HfpDeviceInfo* localDevice = findDeviceInfo(remoteAddr);

@@ -30,7 +30,7 @@ class HfpOfonoModem;
 class HfpOfonoNetworkRegistration
 {
 public:
-	HfpOfonoNetworkRegistration(const std::__cxx11::string& objectPath, HfpOfonoModem* modem);
+	HfpOfonoNetworkRegistration(const std::string& objectPath, HfpOfonoModem* modem);
 	~HfpOfonoNetworkRegistration();
 	HfpOfonoNetworkRegistration(const HfpOfonoNetworkRegistration&) = delete;
 	HfpOfonoNetworkRegistration& operator = (const HfpOfonoNetworkRegistration&) = delete;
