@@ -24,9 +24,11 @@
 #include <gio/gio.h>
 #include <string>
 #include <algorithm>
+#include <cmath>
 #include "hfpofonovoicecallmanager.h"
 #include "hfpofonohandsfree.h"
 #include "hfpofononetworkregistration.h"
+#include "hfpofonocallvolume.h"
 
 extern "C" {
 #include "ofono-interface.h"
@@ -44,6 +46,7 @@ mOfonoModemProxy(nullptr),
 mVoiceCallManager(nullptr),
 mHandsfree(nullptr),
 mNetworkRegistration(nullptr),
+mCallVolume(nullptr),
 mEmergency(false),
 mLockDown(false),
 mOnline(false),
@@ -67,6 +70,7 @@ mAddress("")
 
 	mHandsfree = new HfpOfonoHandsfree(mObjectPath, this);
 	mNetworkRegistration = new HfpOfonoNetworkRegistration(mObjectPath, this);
+	mCallVolume = new HfpOfonoCallVolume(mObjectPath, this);
 
 	g_signal_connect(G_OBJECT(mOfonoModemProxy), "property-changed", G_CALLBACK(handleModemPropertyChanged), this);
 }
@@ -385,4 +389,42 @@ void HfpOfonoModem::notifyProperties()
 
 	if (mNetworkRegistration)
 		updateNetworkSignalStrength(mNetworkRegistration->getNetworkSignalStrength());
+}
+
+void HfpOfonoModem::updateSpeakerVolume(int volume)
+{
+	BT_DEBUG("updateSpeakerVolume");
+
+	HfpDeviceInfo *device = mHfpHFRole->getHfDevice()->findDeviceInfo(mAddress, getAdapterAddress());
+	if (!device)
+	{
+		BT_ERROR("DEVICE NOT FOUND", 0, "%s", "Setting updateSpeakerVolume failed");
+		return;
+	}
+
+	int volumeLevel = std::lround((volume/100.0)*15.0);
+
+	if (device->getAudioStatus(SCO::DeviceStatus::VOLUME) == volumeLevel)
+		return;
+
+	BT_DEBUG("setDeviceStatus for speakerVolume: %d ", volumeLevel);
+
+	device->setAudioStatus(SCO::DeviceStatus::VOLUME, volumeLevel);
+
+	mHfpHFRole->notifySubscribersStatusChanged(true);
+}
+
+void HfpOfonoModem::updateMicrophoneVolume(int volume)
+{
+	//TODO notify hfp service
+}
+
+bool HfpOfonoModem::setSpeakerVolume(int volume)
+{
+	return mCallVolume->setSpeakerVolume(volume);
+}
+
+bool HfpOfonoModem::setMicrophoneVolume(int volume)
+{
+	return mCallVolume->setMicrophoneVolume(volume);
 }

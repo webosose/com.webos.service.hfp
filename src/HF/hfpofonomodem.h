@@ -29,6 +29,7 @@ class HfpHFRole;
 class HfpOfonoVoiceCall;
 class HfpOfonoHandsfree;
 class HfpOfonoNetworkRegistration;
+class HfpOfonoCallVolume;
 
 class HfpOfonoModem
 {
@@ -50,6 +51,10 @@ public:
 	void interfacesChanged();
 	void updateBatteryChargeLevel(int batteryChargeLevel);
 	void updateNetworkSignalStrength(int networkSignalStrength);
+	bool setSpeakerVolume(int volume);
+	void updateSpeakerVolume(int volume);
+	void updateMicrophoneVolume(int volume);
+	bool setMicrophoneVolume(int volume);
 	void notifyProperties();
 
 	static void handleModemPropertyChanged(OfonoModem *proxy, char *name, GVariant *v, void *userData);
@@ -61,6 +66,7 @@ private:
 	HfpOfonoVoiceCallManager *mVoiceCallManager;
 	HfpOfonoHandsfree* mHandsfree;
 	HfpOfonoNetworkRegistration* mNetworkRegistration;
+	HfpOfonoCallVolume *mCallVolume;
 	bool mEmergency;
 	bool mLockDown;
 	bool mOnline;

@@ -48,6 +48,7 @@ public:
 	HFDeviceList getDeviceInfoList() const { return mHfpDeviceInfo; }
 	bool updateSCOStatus(const std::string &remoteAddr, const std::string &adapterAddr, bool status);
 	void updateAudioVolume(const std::string &remoteAddr, int volume, bool isUpdated);
+	void updateAudioVolume(const std::string &remoteAddr, const std::string &adapterAddr, int volume, bool isUpdated);
 	void updateBVRAStatus(bool enabled) { mEnabledBVRA = enabled; }
 	bool getBVRAStatus() const { return mEnabledBVRA; }
 
