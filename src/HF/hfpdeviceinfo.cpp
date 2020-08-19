@@ -20,7 +20,9 @@
 
 HfpDeviceInfo::HfpDeviceInfo():
         mIsEnabledBVRA(false),
-        mIsReceivedRING(false)
+        mIsReceivedRING(false),
+        mNetworkOperatorName(std::string("")),
+        mNetworkRegistrationStatus(std::string("unknown"))
 {
 	initialize();
 }

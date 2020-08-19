@@ -77,11 +77,25 @@ void HfpOfonoNetworkRegistration::getNetworkRegistrationProperties()
 	{
 		key = name;
 
+		BT_DEBUG("%s property changed for device %s", key.c_str(), objectPath);
 		if (key == "Strength" && (g_variant_classify(valueVar) == G_VARIANT_CLASS_BYTE))
 		{
-			BT_DEBUG("Strength property changed for device %s", objectPath);
-			NetworkSignalStrengthChanged(g_variant_get_byte (valueVar));
+			networkSignalStrengthChanged(g_variant_get_byte (valueVar));
 			break;
+		}
+		else if (key == "Name" && (g_variant_classify(valueVar) == G_VARIANT_CLASS_STRING))
+		{
+			gsize len;
+			const gchar* str = g_variant_get_string (valueVar, &len);
+			if (len > 0)
+				networkOperatorNameChanged(std::string(str, len));
+		}
+		else if (key == "Status" && (g_variant_classify(valueVar) == G_VARIANT_CLASS_STRING))
+		{
+			gsize len;
+			const gchar* str = g_variant_get_string (valueVar, &len);
+			if (len > 0)
+				networkRegistrationStatusChanged(std::string(str, len));
 		}
 	}
 }
@@ -96,16 +110,45 @@ void HfpOfonoNetworkRegistration::handleNetworkRegistrationPropertyChanged(Ofono
 	const char *objectPath = g_dbus_proxy_get_object_path(G_DBUS_PROXY(proxy));
 
 	std::string key = name;
+	BT_DEBUG("%s property changed for device %s", key.c_str(), objectPath);
+
 	if (key == "Strength" && (g_variant_classify(va) == G_VARIANT_CLASS_BYTE))
 	{
-		BT_DEBUG("Strength property changed for device %s", objectPath);
-		pThis->NetworkSignalStrengthChanged(g_variant_get_byte (va));
+		pThis->networkSignalStrengthChanged(g_variant_get_byte (va));
+	}
+	else if (key == "Name" && (g_variant_classify(va) == G_VARIANT_CLASS_STRING))
+	{
+		gsize len;
+		const gchar* str = g_variant_get_string (va, &len);
+		if (len > 0)
+			pThis->networkOperatorNameChanged(std::string(str, len));
+	}
+	else if (key == "Status" && (g_variant_classify(va) == G_VARIANT_CLASS_STRING))
+	{
+		gsize len;
+		const gchar* str = g_variant_get_string (va, &len);
+		if (len > 0)
+			pThis->networkRegistrationStatusChanged(std::string(str, len));
 	}
 }
 
-void HfpOfonoNetworkRegistration::NetworkSignalStrengthChanged(int networkSignalStrength)
+void HfpOfonoNetworkRegistration::networkSignalStrengthChanged(int networkSignalStrength)
 {
 	BT_DEBUG("NetworkSignalStrength changed to device %d", networkSignalStrength);
 	mNetworkSignalStrength = networkSignalStrength/20;
 	mModem->updateNetworkSignalStrength(mNetworkSignalStrength);
+}
+
+void HfpOfonoNetworkRegistration::networkOperatorNameChanged(const std::string &name)
+{
+	mNetworkOperatorName = name;
+	BT_DEBUG("NetworkOperatorName changed to device %s", mNetworkOperatorName.c_str());
+	mModem->updateNetworkOperatorName(mNetworkOperatorName);
+}
+
+void HfpOfonoNetworkRegistration::networkRegistrationStatusChanged(const std::string &status)
+{
+	mNetworkRegistrationStatus = status;
+	BT_DEBUG("NetworkRegistrationStatus changed to device %s", mNetworkRegistrationStatus.c_str());
+	mModem->updateNetworkRegistrationStatus(mNetworkRegistrationStatus);
 }

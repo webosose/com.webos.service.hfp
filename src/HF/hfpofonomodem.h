@@ -51,6 +51,8 @@ public:
 	void interfacesChanged();
 	void updateBatteryChargeLevel(int batteryChargeLevel);
 	void updateNetworkSignalStrength(int networkSignalStrength);
+	void updateNetworkOperatorName(const std::string &name);
+	void updateNetworkRegistrationStatus(const std::string &status);
 	bool setSpeakerVolume(int volume);
 	void updateSpeakerVolume(int volume);
 	void updateMicrophoneVolume(int volume);

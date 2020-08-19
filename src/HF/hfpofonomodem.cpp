@@ -189,7 +189,7 @@ void HfpOfonoModem::callAdded(HfpOfonoVoiceCall *voiceCall)
 	HfpDeviceInfo *device = mHfpHFRole->getHfDevice()->findDeviceInfo(mAddress, adapterAddress);
 	if (!device)
 	{
-		BT_ERROR("DEVICE NOT FOUND", 0, "%s", voiceCall->getLineIdentification().c_str());
+		BT_ERROR("DEVICE_NOT_FOUND", 0, "%s", voiceCall->getLineIdentification().c_str());
 		return;
 	}
 
@@ -215,7 +215,7 @@ void HfpOfonoModem::callRemoved(HfpOfonoVoiceCall *voiceCall)
 	HfpDeviceInfo *device = mHfpHFRole->getHfDevice()->findDeviceInfo(mAddress, getAdapterAddress());
 	if (!device)
 	{
-		BT_ERROR("DEVICE NOT FOUND", 0, "%s", voiceCall->getLineIdentification().c_str());
+		BT_ERROR("DEVICE_NOT_FOUND", 0, "%s", voiceCall->getLineIdentification().c_str());
 		return;
 	}
 
@@ -236,7 +236,7 @@ void HfpOfonoModem::updateState(HfpOfonoVoiceCall *voiceCall)
 	HfpDeviceInfo *device = mHfpHFRole->getHfDevice()->findDeviceInfo(mAddress, getAdapterAddress());
 	if (!device)
 	{
-		BT_ERROR("DEVICE NOT FOUND", 0, "%s", voiceCall->getLineIdentification().c_str());
+		BT_ERROR("DEVICE_NOT_FOUND", 0, "%s", voiceCall->getLineIdentification().c_str());
 		return;
 	}
 
@@ -348,7 +348,7 @@ void HfpOfonoModem::updateBatteryChargeLevel(int batteryChargeLevel)
 	HfpDeviceInfo *device = mHfpHFRole->getHfDevice()->findDeviceInfo(mAddress, getAdapterAddress());
 	if (!device)
 	{
-		BT_ERROR("DEVICE NOT FOUND", 0, "%s", "Setting BatteryChargeLevel failed");
+		BT_ERROR("DEVICE_NOT_FOUND", 0, "%s", "Setting BatteryChargeLevel failed");
 		return;
 	}
 
@@ -368,7 +368,7 @@ void HfpOfonoModem::updateNetworkSignalStrength(int networkSignalStrength)
 	HfpDeviceInfo *device = mHfpHFRole->getHfDevice()->findDeviceInfo(mAddress, getAdapterAddress());
 	if (!device)
 	{
-		BT_ERROR("DEVICE NOT FOUND", 0, "%s", "Setting networkSignalStrength failed");
+		BT_ERROR("DEVICE_NOT_FOUND", 0, "%s", "Setting networkSignalStrength failed");
 		return;
 	}
 
@@ -381,6 +381,45 @@ void HfpOfonoModem::updateNetworkSignalStrength(int networkSignalStrength)
 	mHfpHFRole->notifySubscribersStatusChanged(true);
 }
 
+void HfpOfonoModem::updateNetworkOperatorName(const std::string &name)
+{
+	BT_DEBUG("NetworkOperatorName");
+
+	HfpDeviceInfo *device = mHfpHFRole->getHfDevice()->findDeviceInfo(mAddress, getAdapterAddress());
+	if (!device)
+	{
+		BT_ERROR("DEVICE_NOT_FOUND", 0, "%s", "Setting NetworkOperatorName failed");
+		return;
+	}
+
+	if (name.compare(device->getNetworkOperatorName()) == 0)
+		return;
+
+	BT_DEBUG("setDeviceStatus for NetworkOperatorName: %s ", name.c_str());
+	device->setNetworkOperatorName(name);
+
+	mHfpHFRole->notifySubscribersStatusChanged(true);
+}
+
+void HfpOfonoModem::updateNetworkRegistrationStatus(const std::string &status)
+{
+	BT_DEBUG("NetworkRegistrationStatus");
+
+	HfpDeviceInfo *device = mHfpHFRole->getHfDevice()->findDeviceInfo(mAddress, getAdapterAddress());
+	if (!device)
+	{
+		BT_ERROR("DEVICE_NOT_FOUND", 0, "%s", "Setting NetworkRegistrationStatus failed");
+		return;
+	}
+
+	if (status.compare(device->getNetworkRegistrationStatus()) == 0)
+		return;
+
+	BT_DEBUG("setDeviceStatus for NetworkRegistrationStatus: %s ", status.c_str());
+	device->setNetworkRegistrationStatus(status);
+
+	mHfpHFRole->notifySubscribersStatusChanged(true);
+}
 
 void HfpOfonoModem::notifyProperties()
 {
@@ -398,7 +437,7 @@ void HfpOfonoModem::updateSpeakerVolume(int volume)
 	HfpDeviceInfo *device = mHfpHFRole->getHfDevice()->findDeviceInfo(mAddress, getAdapterAddress());
 	if (!device)
 	{
-		BT_ERROR("DEVICE NOT FOUND", 0, "%s", "Setting updateSpeakerVolume failed");
+		BT_ERROR("DEVICE_NOT_FOUND", 0, "%s", "Setting updateSpeakerVolume failed");
 		return;
 	}
 

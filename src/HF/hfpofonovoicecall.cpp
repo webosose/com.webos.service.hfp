@@ -36,7 +36,7 @@ mEmergency(false)
 	mOfonoVoiceCallProxy = ofono_voice_call_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM, G_DBUS_PROXY_FLAGS_NONE, "org.ofono", objectPath.c_str(), NULL, &error);
 	if (error)
 	{
-		BT_ERROR("Failed to create ofono voice call proxy", 0, "Failed to create dbus proxy for ofono voice call on path %s: %s",
+		BT_ERROR("Failed_to_create_ofono_voice_call_proxy", 0, "Failed to create dbus proxy for ofono voice call on path %s: %s",
 			  objectPath.c_str(), error->message);
 		g_error_free(error);
 		return;
@@ -61,7 +61,7 @@ void HfpOfonoVoiceCall::getProperties()
 	(void) ofono_voice_call_call_get_properties_sync(mOfonoVoiceCallProxy, &properties, NULL, &error);
 	if (error)
 	{
-		BT_ERROR("Failed to get ofono voice call property", 0, "Failed get properties from voicecall %s: %s",
+		BT_ERROR("Failed_to_get_ofono_voice_call_property", 0, "Failed get properties from voicecall %s: %s",
 				mObjectPath.c_str(), error->message);
 		return;
 	}
