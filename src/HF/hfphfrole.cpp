@@ -261,7 +261,7 @@ void HfpHFRole::subscribeGetSCOStatus(const std::string &remoteAddr, const std::
 		BT_DEBUG("Subscribing");
 		pbnjson::JValue params = pbnjson::Object();
 		params.put("adapterAddress",adapterAddress.c_str());
-        params.put("address",remoteAddr.c_str());
+		params.put("address",remoteAddr.c_str());
 		params.put("subscribe",true);
 		std::string payload;
 		LSUtils::generatePayload(params, payload);
@@ -1602,6 +1602,8 @@ void HfpHFRole::buildGetStatusResp(const std::string &remoteAddr, const HfpDevic
 		resObj.put("sco", scoStatus);
 		resObj.put("volume", device.getAudioStatus(SCO::DeviceStatus::VOLUME));
 		resObj.put("ring",device.getRING());
+		resObj.put("operatorName",device.getNetworkOperatorName());
+		resObj.put("networkStatus",device.getNetworkRegistrationStatus());
 	};
 
 	for (auto iterCallStatus : localDevice.getCallStatusList())

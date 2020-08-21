@@ -45,8 +45,12 @@ private:
 	std::string mObjectPath;
 	OfonoNetworkRegistration* mOfonoNetworkRegistrationProxy;
 	int mNetworkSignalStrength;
+	std::string mNetworkOperatorName;
+	std::string mNetworkRegistrationStatus;
 
-	void NetworkSignalStrengthChanged(int networkSignalStrength);
+	void networkSignalStrengthChanged(int networkSignalStrength);
+	void networkOperatorNameChanged(const std::string &name);
+	void networkRegistrationStatusChanged(const std::string &status);
 };
 
 #endif
