@@ -437,7 +437,7 @@ void HfpOfonoModem::updateSpeakerVolume(int volume)
 	HfpDeviceInfo *device = mHfpHFRole->getHfDevice()->findDeviceInfo(mAddress, getAdapterAddress());
 	if (!device)
 	{
-		BT_ERROR("DEVICE_NOT_FOUND", 0, "%s", "Setting updateSpeakerVolume failed");
+		BT_ERROR("DEVICE_NOT_FOUND", 0, "Setting updateSpeakerVolume failed");
 		return;
 	}
 
@@ -449,6 +449,8 @@ void HfpOfonoModem::updateSpeakerVolume(int volume)
 	BT_DEBUG("setDeviceStatus for speakerVolume: %d ", volumeLevel);
 
 	device->setAudioStatus(SCO::DeviceStatus::VOLUME, volumeLevel);
+
+	mHfpHFRole->setVolumeToAudio(mAddress, getAdapterAddress());
 
 	mHfpHFRole->notifySubscribersStatusChanged(true);
 }

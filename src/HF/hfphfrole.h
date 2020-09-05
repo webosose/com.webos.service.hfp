@@ -60,6 +60,7 @@ public:
 	void sendResponseToClient(const std::string &remoteAddr, bool returnValue);
 	void notifySubscribersStatusChanged(bool subscribed);
 	void setVolumeToAudio(const std::string &remoteAddr);
+	void setVolumeToAudio(const std::string &remoteAddr, const std::string &adapterAddress);
 	void handleAdapterGetStatus(LSMessage* reply);
 	void handleGetStatus(LSMessage* reply, const std::string &adapterAddr);
 	void handleReceiveResult(LSMessage* reply);

@@ -1588,6 +1588,20 @@ void HfpHFRole::setVolumeToAudio(const std::string &remoteAddr)
 	LSCallOneReply(mLSHandle, lscall.c_str(), payload.c_str(), nullptr, nullptr, nullptr, nullptr);
 }
 
+void HfpHFRole::setVolumeToAudio(const std::string &remoteAddr, const std::string &adapterAddress)
+{
+	BT_DEBUG("Setting volume for device %s", remoteAddr.c_str());
+	auto localDevice = mHFDevice->findDeviceInfo(remoteAddr, adapterAddress);
+	if (localDevice == nullptr)
+		return;
+
+	int volLevel = localDevice->getAudioStatus(SCO::DeviceStatus::VOLUME);
+	int convertedVolume = ((float) volLevel / 15.0) * 100;
+	std::string lscall = HFLS2::AUDIODLSCALL + HFLS2::LUNASETINPUTVOLUME;
+	std::string payload = "{\"streamType\":\"btcall\", \"volume\":" + std::to_string(convertedVolume) + "}";
+	LSCallOneReply(mLSHandle, lscall.c_str(), payload.c_str(), nullptr, nullptr, nullptr, nullptr);
+}
+
 void HfpHFRole::buildGetStatusResp(const std::string &remoteAddr, const HfpDeviceInfo &localDevice, const std::string &adapterAddr, pbnjson::JValue &AGObj)
 {
 

@@ -32,6 +32,7 @@ namespace HFLS2
 	const std::string LUNASUBSCRIBE = "{\"subscribe\":true}";
 	const std::string LUNASENDAT = "hfp/sendAT";
 	const std::string LUNASETVOLUME="phone/setVolume";
+	const std::string LUNASETINPUTVOLUME = "setInputVolume";
 	const int INVALIDINDEX = -1;
 
 	enum APIName
