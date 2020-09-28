@@ -86,6 +86,9 @@ HfpOfonoModem::~HfpOfonoModem()
 	if (mNetworkRegistration)
 		delete mNetworkRegistration;
 
+	if (mCallVolume)
+		delete mCallVolume;
+
 	if (mOfonoModemProxy)
 		g_object_unref(mOfonoModemProxy);
 
@@ -348,7 +351,7 @@ void HfpOfonoModem::updateBatteryChargeLevel(int batteryChargeLevel)
 	HfpDeviceInfo *device = mHfpHFRole->getHfDevice()->findDeviceInfo(mAddress, getAdapterAddress());
 	if (!device)
 	{
-		BT_ERROR("DEVICE_NOT_FOUND", 0, "%s", "Setting BatteryChargeLevel failed");
+		BT_ERROR("DEVICE_NOT_FOUND", 0, "Setting BatteryChargeLevel failed");
 		return;
 	}
 
@@ -368,7 +371,7 @@ void HfpOfonoModem::updateNetworkSignalStrength(int networkSignalStrength)
 	HfpDeviceInfo *device = mHfpHFRole->getHfDevice()->findDeviceInfo(mAddress, getAdapterAddress());
 	if (!device)
 	{
-		BT_ERROR("DEVICE_NOT_FOUND", 0, "%s", "Setting networkSignalStrength failed");
+		BT_ERROR("DEVICE_NOT_FOUND", 0, "Setting networkSignalStrength failed");
 		return;
 	}
 
@@ -388,7 +391,7 @@ void HfpOfonoModem::updateNetworkOperatorName(const std::string &name)
 	HfpDeviceInfo *device = mHfpHFRole->getHfDevice()->findDeviceInfo(mAddress, getAdapterAddress());
 	if (!device)
 	{
-		BT_ERROR("DEVICE_NOT_FOUND", 0, "%s", "Setting NetworkOperatorName failed");
+		BT_ERROR("DEVICE_NOT_FOUND", 0,"Setting NetworkOperatorName failed");
 		return;
 	}
 
@@ -408,7 +411,7 @@ void HfpOfonoModem::updateNetworkRegistrationStatus(const std::string &status)
 	HfpDeviceInfo *device = mHfpHFRole->getHfDevice()->findDeviceInfo(mAddress, getAdapterAddress());
 	if (!device)
 	{
-		BT_ERROR("DEVICE_NOT_FOUND", 0, "%s", "Setting NetworkRegistrationStatus failed");
+		BT_ERROR("DEVICE_NOT_FOUND", 0,"Setting NetworkRegistrationStatus failed");
 		return;
 	}
 
