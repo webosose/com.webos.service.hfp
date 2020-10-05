@@ -149,7 +149,7 @@ bool HfpOfonoCallVolume::setVolume(int volume, const std::string &propertyName)
 
 	if (error)
 	{
-		BT_ERROR("MSGID_FAILED_TO_SET_VOLUME", 0, "Failed to setVolume %s: %s", error->message);
+		BT_ERROR("MSGID_FAILED_TO_SET_VOLUME", 0, "Failed to setVolume: %s", error->message);
 		g_error_free(error);
 		return false;
 	}

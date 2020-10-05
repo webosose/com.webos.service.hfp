@@ -205,8 +205,15 @@ void HfpHFRole::subscribeService()
 	std::string lunaCmd = HFLS2::BTLSCALL + HFLS2::LUNAADAPTERGETSTATUS;
 	unsubscribeService(HFLS2::APIName::ADAPTERGETSTATUS);
 	int index = findContextIndex(HFLS2::APIName::ADAPTERGETSTATUS);
-	LSCall(this->mLSHandle, lunaCmd.c_str(), HFLS2::LUNASUBSCRIBE.c_str(), mHFSubscribe->getAdapterStatusCallback,
-                mContextList[index], &std::get<HFLS2::ContextData::TOKEN>(*mContextList[index]), &lserror);
+	if (index != HFLS2::INVALIDINDEX)
+	{
+		LSCall(this->mLSHandle, lunaCmd.c_str(), HFLS2::LUNASUBSCRIBE.c_str(), mHFSubscribe->getAdapterStatusCallback,
+				mContextList[index], &std::get<HFLS2::ContextData::TOKEN>(*mContextList[index]), &lserror);
+	}
+	else
+	{
+		BT_DEBUG("LS2 subscription is failed as index is invalid");
+	}
 
 	/*lunaCmd = HFLS2::BTLSCALL + HFLS2::LUNAGETSTATUS;
 	unsubscribeService(HFLS2::APIName::GETSTATUS);
@@ -598,22 +605,19 @@ bool HfpHFRole::releaseHeldCalls(LSMessage &message)
 		}
 
 		do {
-			if (heldVoiceCall)
+			if (heldVoiceCall->hangup())
 			{
-				if (heldVoiceCall->hangup())
-				{
-					pbnjson::JValue responseObj = pbnjson::Object();
-					responseObj.put("returnValue", true);
-					responseObj.put("address", remoteAddr);
+				pbnjson::JValue responseObj = pbnjson::Object();
+				responseObj.put("returnValue", true);
+				responseObj.put("address", remoteAddr);
 
-					LSUtils::postToClient(request, responseObj);
-					return true;
-				}
-				else
-				{
-					LSUtils::respondWithError(request, BT_ERR_TERMINATE_CALL_FAILED);
-					return true;
-				}
+				LSUtils::postToClient(request, responseObj);
+				return true;
+			}
+			else
+			{
+				LSUtils::respondWithError(request, BT_ERR_TERMINATE_CALL_FAILED);
+				return true;
 			}
 		} while ((heldVoiceCall = voiceCallManager->getVoiceCall("held")));
 	}
