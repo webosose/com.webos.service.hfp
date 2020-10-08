@@ -225,3 +225,21 @@ void HfpOfonoVoiceCallManager::handleCallRemoved(OfonoVoiceCallManager *object, 
 
 	pThis->mCallMap.erase(path);
 }
+
+bool HfpOfonoVoiceCallManager::releaseHeldCalls()
+{
+	BT_DEBUG("Release Held Calls");
+
+	for (auto it = mCallMap.begin(); it != mCallMap.end(); it++)
+	{
+		BT_DEBUG("releaseHeldCalls %s", it->second->getCallState().c_str());
+		if (it->second->getCallState() == "held")
+		{
+			HfpOfonoVoiceCall* heldVoiceCall = it->second.get();
+			if (!heldVoiceCall || !heldVoiceCall->hangup())
+				return false;
+		}
+	}
+
+	return true;
+}

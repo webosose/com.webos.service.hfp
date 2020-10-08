@@ -604,22 +604,20 @@ bool HfpHFRole::releaseHeldCalls(LSMessage &message)
 			return true;
 		}
 
-		do {
-			if (heldVoiceCall->hangup())
-			{
-				pbnjson::JValue responseObj = pbnjson::Object();
-				responseObj.put("returnValue", true);
-				responseObj.put("address", remoteAddr);
+		if (voiceCallManager->releaseHeldCalls())
+		{
+			pbnjson::JValue responseObj = pbnjson::Object();
+			responseObj.put("returnValue", true);
+			responseObj.put("address", remoteAddr);
 
-				LSUtils::postToClient(request, responseObj);
-				return true;
-			}
-			else
-			{
-				LSUtils::respondWithError(request, BT_ERR_TERMINATE_CALL_FAILED);
-				return true;
-			}
-		} while ((heldVoiceCall = voiceCallManager->getVoiceCall("held")));
+			LSUtils::postToClient(request, responseObj);
+		}
+		else
+		{
+			LSUtils::respondWithError(request, BT_ERR_TERMINATE_CALL_FAILED);
+		}
+
+		return true;
 	}
 
 	LSUtils::respondWithError(request, BT_ERR_RELEASE_ACTIVE_CALLS_FAILED);
