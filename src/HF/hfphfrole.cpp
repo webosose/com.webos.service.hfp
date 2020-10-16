@@ -1628,7 +1628,16 @@ void HfpHFRole::buildGetStatusResp(const std::string &remoteAddr, const HfpDevic
 		responseObj.put("number", iterCallStatus.first);
 		responseObj.put("callStatus", iterCallStatus.second->getCallStatus(CLCC::DeviceStatus::STATUS));
 		responseObj.put("direction", iterCallStatus.second->getCallStatus(CLCC::DeviceStatus::DIRECTION));
-		responseObj.put("index", std::stoi(iterCallStatus.second->getCallStatus(CLCC::DeviceStatus::INDEX)));
+		if (!iterCallStatus.second->getCallStatus(CLCC::DeviceStatus::INDEX).empty())
+		{
+			responseObj.put("index", std::stoi(iterCallStatus.second->getCallStatus(CLCC::DeviceStatus::INDEX)));
+		}
+		else
+		{
+			BT_DEBUG("Index is empty!!");
+			responseObj.put("index", 0);
+		}
+
 		printDeviceStatus(responseObj, remoteAddr, localDevice);
 		AGObj.append(responseObj);
 	}
