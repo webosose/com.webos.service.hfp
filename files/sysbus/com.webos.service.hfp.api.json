@@ -1,6 +1,8 @@
 {
-    "bluetooth.manage":[
-        "com.webos.service.hfp/hf/getStatus",
+    "bluetooth.query": [
+        "com.webos.service.hfp/hf/getStatus"
+    ],
+    "bluetooth.management": [
         "com.webos.service.hfp/hf/answerCall",
         "com.webos.service.hfp/hf/terminateCall",
         "com.webos.service.hfp/hf/releaseHeldCalls",
