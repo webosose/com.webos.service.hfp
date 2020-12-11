@@ -69,7 +69,7 @@ public:
 	void unsubscribeServiceAll();
 	void unsubscribeScoServicebyAdapterAddress(const std::string &adapterAddr);
 	HfpHFDeviceStatus* getHfDevice() const { return mHFDevice;}
-	std::unordered_map<std::string ,std::string> & getAdapterMap() { return mAdapterMap; }
+	std::unordered_map<std::string ,std::string> & getAdapterMap() { return mAdapterInterfaceMap; }
 
 private:
 	void buildGetStatusResp(const std::string &remoteAddr, const HfpDeviceInfo &localDevice, const std::string &adapterAddr, pbnjson::JValue &AGObj);
@@ -109,6 +109,7 @@ private:
 	HfpOfonoManager *mHfpOfonoManager;
 	DBusUtils::NameWatch mNameWatch;
 	std::unordered_map<std::string ,std::string> mAdapterMap; //address to name map
+	std::unordered_map<std::string ,std::string> mAdapterInterfaceMap; //address to interface map
 };
 
 #endif

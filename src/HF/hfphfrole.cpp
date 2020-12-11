@@ -1342,6 +1342,7 @@ void HfpHFRole::handleAdapterGetStatus(LSMessage* reply)
 			{
 				BT_DEBUG("Removing Adapter %s from map", itr->second.c_str());
 				unsubscribeService(itr->first);
+				mAdapterInterfaceMap.erase(itr->first);
 				itr = mAdapterMap.erase(itr);
 			}
 			else
@@ -1375,16 +1376,18 @@ void HfpHFRole::handleAdapterGetStatus(LSMessage* reply)
 			{
 				BT_DEBUG("Adding Adapter %s powered %d",adapterName.c_str(), powered);
 				//Enable SCO routing
-				std::size_t found = adapterName.find("hci");
+				std::string hciInterface =  adapterObj["interfaceName"].asString();
+				std::size_t found =  hciInterface.find("hci");
 				if (found != std::string::npos)
 				{
 					std::string hcitool = "hcitool";
 					std::string hcicmd = "0x3F 0x01C 0x01 0x02 0x00 0x01 0x01 &";
-					std::string hcidevice = adapterName.substr(found);
+					std::string hcidevice = hciInterface;
 					std::string cmd = hcitool +  " -i " + hcidevice + std::string(" cmd ") + hcicmd;
 					system(cmd.c_str());
 				}
 				mAdapterMap.insert(std::make_pair(adapterAaddress,adapterName));
+				mAdapterInterfaceMap.insert(std::make_pair(adapterAaddress, adapterObj["interfaceName"].asString()));
 				subscribeGetDeviceStatus(adapterAaddress,true);
 			}
 		}
