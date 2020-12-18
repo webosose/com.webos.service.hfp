@@ -1,0 +1,5 @@
+{
+    "allowedNames": ["com.webos.service.hfp"],
+          "bluetooth.query": ["dev"],
+          "bluetooth.management": ["oem"]
+}
