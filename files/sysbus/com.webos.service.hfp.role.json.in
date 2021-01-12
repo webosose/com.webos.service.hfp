@@ -1,7 +1,7 @@
 {
     "exeName":"@WEBOS_INSTALL_SBINDIR@/webos-hfp-service",
     "type": "regular",
-    "trustlevel": "oem",
+    "trustLevel": "oem",
     "allowedNames": ["com.webos.service.hfp"],
     "permissions": [
         {
