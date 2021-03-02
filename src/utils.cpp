@@ -1,4 +1,4 @@
-// Copyright (c) 2020 LG Electronics, Inc.
+// Copyright (c) 2020-2021 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ bool checkFileIsValid(const std::string &path)
 void dump(const uint8_t *data, size_t len, const char *ind)
 {
 #define DUMPW 16
-        char buf[DUMPW + 1] = { 0 };
+        char buf[DUMPW + 1] = { '\0' };
         int cnt = (len + DUMPW - 1) / DUMPW;
         int i, j;
 
@@ -85,12 +85,12 @@ void dump(const uint8_t *data, size_t len, const char *ind)
 
         for (i = 0; i < cnt; ++i) {
                 for (j = 0; j < DUMPW; ++j) {
-                        sprintf(buf + j, "%c", (0x20 <= *data && *data <= 0x7e) ? *data : '.');
+                        sprintf(buf + j, "%c", (0x20 <= *data && *data <= 0x7e) ? (char)*data : '.');
                         printf("%02x ", *data++);
                         if (--len == 0)
                                 break;
                 }
-                buf[j] = 0;
+                buf[j] = '\0';
                 printf("%*s\n%s", (DUMPW - j) * 3, buf, ind);
         }
         printf("\n");
