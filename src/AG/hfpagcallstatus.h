@@ -19,6 +19,7 @@
 
 #define MAX_CALL       3
 
+#include <cstdint>
 #include <string>
 
 class HfpAGRole;
