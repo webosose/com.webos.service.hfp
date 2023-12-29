@@ -1,4 +1,4 @@
-# Copyright (c) 2020 LG Electronics, Inc.
+# Copyright (c) 2020-2024 LG Electronics, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -59,10 +59,8 @@ webos_add_compiler_flags(ALL ${PMLOG_CFLAGS_OTHER})
 set(GDBUS_IF_DIR ${WEBOS_BINARY_CONFIGURED_DIR}/src)
 file(MAKE_DIRECTORY ${GDBUS_IF_DIR})
 
-if(WEBOS_TARGET_DISTRO STREQUAL "webos-auto")
-    if(WEBOS_TARGET_MACHINE STREQUAL "sa8155" OR WEBOS_TARGET_MACHINE STREQUAL "qemux86" OR WEBOS_TARGET_MACHINE STREQUAL "qemux86-64")
-        add_definitions(-DMULTI_SESSION_SUPPORT)
-    endif()
+if(MULTI_SESSION_SUPPORT)
+    add_definitions(-DMULTI_SESSION_SUPPORT)
 endif()
 
 execute_process(COMMAND ${GDBUS_CODEGEN_EXECUTABLE}
