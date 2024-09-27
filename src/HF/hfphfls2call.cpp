@@ -46,7 +46,7 @@ bool HfpHFLS2Call::parseLSMessage(LS::Message &request, const HfpHFLS2Data &ls2D
 			break;
 		}
 		std::pair<std::string, std::string> insertParam(key, convertedParam);
-		result.insert(insertParam);
+		result.insert(std::move(insertParam));
 	};
 	auto localParam = ls2Data.getParamList();
 	for (auto iterParam : localParam)

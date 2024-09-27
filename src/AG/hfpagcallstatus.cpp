@@ -31,7 +31,7 @@ HfpAGCallStatus::~HfpAGCallStatus()
 
 void HfpAGCallStatus::setCallInfo(const int callIndex, const CallInfoPos pos, const int value)
 {
-	if (callIndex >= MAX_CALL || pos >= MAX_CALLINFO_POS)
+	if (callIndex >= MAX_CALL || pos >= MAX_CALLINFO_POS || callIndex < 0)
 		return;
 
 	mCallInfo[callIndex][pos] = value;
@@ -53,7 +53,7 @@ void HfpAGCallStatus::setCallStatus(const int callIndex, const std::string &stat
 
 void HfpAGCallStatus::setCallNumber(const int callIndex, const std::string &number)
 {
-	if (callIndex >= MAX_CALL)
+	if (callIndex >= MAX_CALL || callIndex < 0)
 		return;
 
 	mCallNumber[callIndex] = number;

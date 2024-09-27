@@ -218,7 +218,7 @@ bool HfpAGSubscribe::subscribeCb(LSHandle *handle, LSMessage *reply, void *conte
 		return true;
 	}
 
-	if (cbInfo->cbType >= MAX_CALLBACK_TYPE)
+	if (cbInfo->cbType >= MAX_CALLBACK_TYPE || cbInfo->cbType < 0)
 		return true;
 
 	BT_DEBUG("subscribe callback:%d", cbInfo->cbType);
